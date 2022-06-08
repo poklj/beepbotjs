@@ -1,7 +1,13 @@
-module.exports = {
 
+
+
+module.exports = {
     body: [WORK, CARRY, MOVE],
-    role: "harvester",
+    role: 'harvester',
+    /**
+     * 
+     * @param {Creep} creep 
+     */
     run(creep){
         //Creep behavior
         //TODO: replace this a mining manager.... memory!
@@ -9,9 +15,14 @@ module.exports = {
         if(creep.carry.energy < creep.carryCapacity) {
             //harvest energy
             var sources = creep.room.find(FIND_SOURCES);
-            if(creep.harvest(sources[0]) == ERR_NOT_IN_RANGE) {
+            var harvestAttempt = creep.harvest(sources[0]);
+            if(harvestAttempt == ERR_NOT_IN_RANGE) {
+                creep.say("moving to " + sources[0].id);
                 creep.moveTo(sources[0]);
                 console.log("Harvester" + Game.time + ": " + creep.name + " moving to source" + sources[0].id);
+            }
+            else if (harvestAttempt = OK) {
+                
             }
         } else {
             //carry energy to storage
