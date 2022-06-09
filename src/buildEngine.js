@@ -45,12 +45,22 @@ module.exports = {
                     }).length;
             }
             if(room.memory.l1placed == undefined) {
-                room.memory.l1placed = false;
+                
                 var containerMatrix = [[-1, -1], [1, -1], [-1, 1], [1, 1]]; // x and y offsets for container placement from spawn
                 containerMatrix.forEach((offset) => {
                         room.createConstructionSite(spawnPos.x + offset[0], spawnPos.y + offset[1], STRUCTURE_CONTAINER);
                 });
+                room.memory.l1placed = true;
             }
+            
+            //Build roads to sources
+            var sources = room.find(FIND_SOURCES);
+            sources.forEach((source) => {
+                var path = room.findPath(spawnPos, source.pos, {ignoreCreeps: true});
+                path.forEach((step) => {
+                    room.createConstructionSite(step.x, step.y, STRUCTURE_ROAD);
+                });
+            });
         }
 
     },

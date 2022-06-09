@@ -17,7 +17,21 @@ module.exports = {
                 }});
             
             var closestContainer = creep.pos.findClosestByPath(containers);
-            if(creep.withdraw(closestContainer, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+            var canWithdraw = true;
+            if (closestContainer == STRUCTURE_SPAWN) {
+                //negotiate with the spawn to see if its alllowed to actually withdraw energy.. otherwise it will just sit there and wait
+                canWithdraw = spawnUtil.canWithdraw(Game.spawns[closestContainer.id]);
+            }
+            //if the spawn is allowed to withdraw, then withdraw otherwise move to the container
+            if(canWithdraw) {
+                var withdrawAttempt = creep.withdraw(closestContainer, RESOURCE_ENERGY);
+                if(withdrawAttempt == ERR_NOT_IN_RANGE) {
+                    creep.moveTo(closestContainer);
+                }
+                
+            } else {
+                //if the spawn is not allowed to withdraw, then move to the container and wait for the spawn to allow it
+                creep.say("Can't withdraw");
                 creep.moveTo(closestContainer);
             }
         }

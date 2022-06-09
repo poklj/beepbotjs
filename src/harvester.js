@@ -12,17 +12,18 @@ module.exports = {
         //Creep behavior
         //TODO: replace this a mining manager.... memory!
 
-        if(creep.carry.energy < creep.carryCapacity) {
+        if(creep.store.energy < creep.store.getCapacity()) {
             //harvest energy
             var sources = creep.room.find(FIND_SOURCES);
             var harvestAttempt = creep.harvest(sources[0]);
             if(harvestAttempt == ERR_NOT_IN_RANGE) {
                 creep.say("moving to " + sources[0].id);
                 creep.moveTo(sources[0]);
+                Game.map.visual.line(creep.pos, sources[0].pos, {color: 'red'});
                 console.log("Harvester" + Game.time + ": " + creep.name + " moving to source" + sources[0].id);
             }
-            else if (harvestAttempt = OK) {
-                
+            else if (harvestAttempt == OK) {
+                creep.say("bonk");
             }
         } else {
             //carry energy to storage
@@ -38,7 +39,7 @@ module.exports = {
                 }
             }
         }
-    },
+    }
 
 
 }

@@ -1,6 +1,6 @@
 // This is the Main script that is each game loop. This will be a little strange but deal with the declaritiveness and suffer.
 var gamestate = require('./gamestate');
-var spawnBehavior = require('./spawn');
+var spawnBehavior = require('./spawnUtil');
 
 var _ = require('lodash');
 const creep = require('./creepUtil');
