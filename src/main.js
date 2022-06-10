@@ -5,6 +5,7 @@ var spawnBehavior = require('./spawnUtil');
 var _ = require('lodash');
 const creep = require('./creepUtil');
 const buildEngine = require('./buildEngine');
+const miningEngine = require('./miningEngine');
 
 
 console.log("Gameloop" + Game.time);
@@ -13,6 +14,7 @@ for (const roomID in Game.rooms) {
     var room = Game.rooms[roomID];
     buildEngine.initializeClaimedRoomMemory(room);
     buildEngine.saturateToLevel(room);
+    miningEngine.initializeSourcesInClaimedRooms(room);
 }
 
 for(const spawnHash in Game.spawns) {

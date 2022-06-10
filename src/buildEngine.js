@@ -53,14 +53,40 @@ module.exports = {
                 room.memory.l1placed = true;
             }
             
-            //Build roads to sources
-            var sources = room.find(FIND_SOURCES);
-            sources.forEach((source) => {
-                var path = room.findPath(spawnPos, source.pos, {ignoreCreeps: true});
-                path.forEach((step) => {
-                    room.createConstructionSite(step.x, step.y, STRUCTURE_ROAD);
+            //Build roads to sources only if we have at least one container
+            if(room.memory.numContainers > 0) {
+
+                var sources = room.find(FIND_SOURCES);
+                sources.forEach((source) => {
+                    var path = room.findPath(spawnPos, source.pos, {ignoreCreeps: true});
+                    path.forEach((step) => {
+                        room.createConstructionSite(step.x, step.y, STRUCTURE_ROAD);
+                    });
                 });
-            });
+            }
+        }
+        //Room level 2, build extensions and cover the base with ramparts.
+        if(room.controller.level == 2) {
+            if(room.memory.numExtensions == undefined) {
+                room.memory.numExtensions = _.find(Game.structures, (structure) => {
+                        return structure.structureType == STRUCTURE_EXTENSION && structure.pos.roomName == room.name; 
+                        }).length;
+            }
+            if(room.memory.l2placed == undefined) {
+                //How far to propagate ramparts from spawns in spaces.
+                var baseRampartDepth = 4;
+                //find rooms mainspawn
+                var mainSpawn = Game.getObjectById(room.memory.mainSpawn);
+                var spawnPos = mainSpawn.pos; // RoomPosition
+                //propagate ramparts from spawn to baseRampartDepth
+                for(var i = 0; i < baseRampartDepth; i++) {
+                    //propagate ramparts from spawn to baseRampartDepth in a square pattern outwards from the spawn
+                    room.createConstructionSite(spawnPos.x + i, spawnPos.y + i, STRUCTURE_RAMPART);
+                    room.createConstructionSite(spawnPos.x - i, spawnPos.y + i, STRUCTURE_RAMPART);
+                    room.createConstructionSite(spawnPos.x + i, spawnPos.y - i, STRUCTURE_RAMPART);
+                    room.createConstructionSite(spawnPos.x - i, spawnPos.y - i, STRUCTURE_RAMPART);
+                }
+            }
         }
 
     },

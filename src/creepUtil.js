@@ -15,6 +15,8 @@ module.exports = {
             return harvester.body;
         } else if(role == "builder") {
             return builder.body;
+        } else if(role == "maintainer") {
+            return maintainer.body;
         }
     },
 
@@ -34,5 +36,8 @@ module.exports = {
         if(creepRole == "builder") {
             builder.run(creep);
         }
-    }
+        if(creepRole == "maintainer") {
+            maintainer.run(creep);
+        }
+    },
 }

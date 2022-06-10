@@ -6,8 +6,6 @@
 
 const buildEngine = require("./buildEngine");
 const creepUtil = require("./creepUtil");
-const creep = require("./creepUtil");
-const gamestate = require("./gamestate");
 const harvester = require("./harvester");
 const builder = require("./builder");
 
@@ -31,25 +29,31 @@ module.exports = {
         var numOfBuildersInRoom = _.sum(Game.creeps, (creep) => creep.memory.role == "builder" && creep.room.name == spawn.room.name);
         var numOfHarvestersQueued = _.sum(spawn.memory.queue, (str) => str == "harvester");
         var numOfBuildersQueued = _.sum(spawn.memory.queue, (str) => str == "builder");
-        var numOfQueued = _.sum(spawn.memory.queue, (str) => str);
-        
+        var numOfQueued = spawn.memory.queue.length;
+        var numofContainersInRoom = _.sum(Game.structures, (structure) => structure.structureType == STRUCTURE_CONTAINER && structure.room.name == spawn.room.name);
+        var numOfMaintainersInRoom = _.sum(Game.creeps, (creep) => creep.memory.role == "maintainer" && creep.room.name == spawn.room.name);
+        var numOfMaintainersQueued = _.sum(spawn.memory.queue, (str) => str == "maintainer");
+
         Game.map.visual.text("Queue: " + numOfQueued, new RoomPosition(spawn.pos.x , spawn.pos.y + 1, spawn.pos.roomName) , {color: 'white'});
 
         console.log("Harvesters: " + numOfHarvestersInRoom + " Queued: " + numOfHarvestersQueued);
         console.log("Builders: " + numOfBuildersInRoom + " Queued: " + numOfBuildersQueued);
         spawn.memory.mode = "normal";
         
-        if(spawn.memory.mode == "normal" || spawn.memory.mode == "hasQueue") {
-            if(numOfHarvestersInRoom + numOfHarvestersQueued <= 2 ) {
+            if(numOfHarvestersInRoom + numOfHarvestersQueued <= 5 ) {
                 console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has less than 2 harvesters, requesting more");
                 this.registerCreate(spawn, 'harvester');
             }
             if(numOfBuildersInRoom + numOfBuildersQueued <= 2 ) {
                     console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has less than 2 builders, requesting more");
                     this.registerCreate(spawn, 'builder');
-                }
             }
-
+            //If we have a container queue a maintainer
+            if(numofContainersInRoom > 1 && numOfMaintainersInRoom + numOfMaintainersQueued == 0) 
+            {
+                console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has more than 1 container, requesting maintainer");
+                this.registerCreate(spawn, 'maintainer');
+            }
 
         if(numOfQueued > 0) {
             console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has " + numOfQueued + " queued");
@@ -83,7 +87,7 @@ module.exports = {
 
     /**
      * Check if a spawn is able to create a creep.
-     * @param {Spawn} spawn the Spawn to check if able to create a creep
+     * @param {StructureSpawn} spawn the Spawn to check if able to create a creep
      * @returns 
      */
     canCreateCreep(spawn){
@@ -91,10 +95,14 @@ module.exports = {
         return spawn.spawning == null;
     },
 
-    canWithdraw(spawn) {
-        console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " Checking if spawn can withdraw");
-        return spawn.memory.mode == "normal";
-    },
+
+    
+    /**
+     * Refresh a requesting creep. This is called when a creep asks to not die to timeout.
+     * @param {StructureSpawn} spawn 
+     * @param {Creep} creep 
+     */
+
 
     /**
      * 
