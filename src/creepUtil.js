@@ -1,15 +1,11 @@
 
 var harvester = require("./harvester");
 var builder = require("./builder");
+var maintainer = require("./maintainer");
+var repairer = require("./repairer");
+const defenderBasic = require("./defenderBasic");
 
 module.exports = {
-    identifyFromBody(body){
-        if (body == harvester.body) {
-            return "harvester";
-        } else if(body == builder.body) {
-            return "builder";
-        }
-    },
     bodyFromRole(role){
         if (role == "harvester") {
             return harvester.body;
@@ -17,6 +13,10 @@ module.exports = {
             return builder.body;
         } else if(role == "maintainer") {
             return maintainer.body;
+        } else if(role == "repairer") {
+            return repairer.body;
+        } else if(role == "defenderBasic") {
+            return defenderBasic.body;
         }
     },
 
@@ -38,6 +38,12 @@ module.exports = {
         }
         if(creepRole == "maintainer") {
             maintainer.run(creep);
+        }
+        if(creepRole == "repairer") {
+            repairer.run(creep);
+        }
+        if(creepRole == "defenderBasic") {
+            defenderBasic.run(creep);
         }
     },
 }

@@ -3,6 +3,7 @@ var screeps = require('gulp-screeps');
 var credentials = require('./credentials.js');
 var localCredentials = require('./localCredentials.js');
 var http = require('https');
+const credentialsPtr = require('./credentials-ptr.js');
 
 function printRemoveEndpointRatelimiting(){
     console.log('To remove ratelimit for 2 hours go to: ')
@@ -58,3 +59,7 @@ gulp.task('screeps-local', function() {
  return gulp.src('src/*.js')
     .pipe(gulp.dest(localCredentials.localUsrStorageLocation));
 });
+gulp.task('screeps-ptr', function() {
+  return gulp.src('src/*.js')
+      .pipe(screeps(credentialsPtr));
+})

@@ -33,8 +33,13 @@ module.exports = {
         var numofContainersInRoom = _.sum(Game.structures, (structure) => structure.structureType == STRUCTURE_CONTAINER && structure.room.name == spawn.room.name);
         var numOfMaintainersInRoom = _.sum(Game.creeps, (creep) => creep.memory.role == "maintainer" && creep.room.name == spawn.room.name);
         var numOfMaintainersQueued = _.sum(spawn.memory.queue, (str) => str == "maintainer");
+        var numOfRepairersInRoom = _.sum(Game.creeps, (creep) => creep.memory.role == "repairer" && creep.room.name == spawn.room.name);
+        var numOfRepairersQueued = _.sum(spawn.memory.queue, (str) => str == "repairer");
+        var numOfBasicDefendersInRoom =  _.sum(Game.creeps, (creep) => creep.memory.role == "defenderBasic" && creep.room.name == spawn.room.name);
+        var numOfBasicDefendersQueued = _.sum(spawn.memory.queue, (str) => str == "defenderBasic");
 
-        Game.map.visual.text("Queue: " + numOfQueued, new RoomPosition(spawn.pos.x , spawn.pos.y + 1, spawn.pos.roomName) , {color: 'white'});
+
+        new RoomVisual(spawn.pos.roomName).text("Queue: " + numOfQueued, new RoomPosition(spawn.pos.x , spawn.pos.y + 1, spawn.pos.roomName) , {color: 'white'});
 
         console.log("Harvesters: " + numOfHarvestersInRoom + " Queued: " + numOfHarvestersQueued);
         console.log("Builders: " + numOfBuildersInRoom + " Queued: " + numOfBuildersQueued);
@@ -44,17 +49,39 @@ module.exports = {
                 console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has less than 2 harvesters, requesting more");
                 this.registerCreate(spawn, 'harvester');
             }
-            if(numOfBuildersInRoom + numOfBuildersQueued <= 2 ) {
+            if(spawn.room.controller.level >=2 && numOfHarvestersInRoom + numOfHarvestersQueued <= 10 ) {
+                console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has less than 10 harvesters, requesting more");
+                this.registerCreate(spawn, 'harvester');
+            }
+            if(spawn.room.controller.level == 1 && numOfBuildersInRoom + numOfBuildersQueued <= 2 ) {
                     console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has less than 2 builders, requesting more");
                     this.registerCreate(spawn, 'builder');
             }
+            if (spawn.room.controller.level == 2 && numOfBuildersInRoom + numOfBuildersQueued <= 1 ) {
+                console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has less than 1 builder, requesting more");
+                this.registerCreate(spawn, 'builder');
+            }
+            // if room level is 1 and there are no repairers, request a repairer
+            if (spawn.room.controller.level == 1 && numOfRepairersInRoom + numOfRepairersQueued <= 0 ) {
+                console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has no repairers, requesting more");
+                this.registerCreate(spawn, 'repairer');
+            }
             //If we have a container queue a maintainer
-            if(numofContainersInRoom > 1 && numOfMaintainersInRoom + numOfMaintainersQueued == 0) 
+            if(numofContainersInRoom > 1 && numOfMaintainersInRoom + numOfMaintainersQueued < 2) 
             {
                 console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has more than 1 container, requesting maintainer");
                 this.registerCreate(spawn, 'maintainer');
             }
-
+            //if room level is 2 or higher, queue a repairer
+            if(spawn.room.controller.level >= 2 && numOfRepairersInRoom + numOfRepairersQueued < 3) {
+                console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has room level of " + spawn.room.controller.level + ", requesting repairer");
+                this.registerCreate(spawn, 'repairer');
+            }
+            if(spawn.room.controller.level >=2 && numOfBasicDefendersInRoom + numOfBasicDefendersQueued < 4) {
+                console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has room level of " + spawn.room.controller.level + ", requesting basic defender");
+                this.registerCreate(spawn, 'defenderBasic');
+            }
+           
         if(numOfQueued > 0) {
             console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has " + numOfQueued + " queued");
             spawn.memory.mode = "hasQueue";
@@ -118,6 +145,7 @@ module.exports = {
                 "Creep" + Game.time + "_" + qRole,{
                     memory: {
                         role: qRole,
+                        spawnID: spawn.id, //remember the spawn id that created this creep
                     }
                 }); 
                 console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " Spawning result: " +   result.toString());

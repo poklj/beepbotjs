@@ -20,12 +20,13 @@ for (const roomID in Game.rooms) {
 for(const spawnHash in Game.spawns) {
     spawnBehavior.run(Game.spawns[spawnHash]);
 }
-
 for(const creepHash in Game.creeps) {
     console.log("BeepBot: " + Game.creeps[creepHash].name + " is running");
-    if(Memory.creepnumbers == undefined) {
-        Memory.creepnumbers = {};
-    }
-    Memory.creepnumbers[Game.creeps[creepHash].memory.role]++;
+    
+    //aggregate all roles of all alive creeps
+    var roles = _.map(Game.creeps, (creep) => { return creep.memory.role; });
+    //take the array of roles and count the number of times each role appears on an alive creep
+    var roleCounts = _.countBy(roles);
+    Memory.creepTally = roleCounts;
     creep.runFromRole(Game.creeps[creepHash]);
 }

@@ -46,7 +46,7 @@ module.exports = {
             }
             if(room.memory.l1placed == undefined) {
                 
-                var containerMatrix = [[-1, -1], [1, -1], [-1, 1], [1, 1]]; // x and y offsets for container placement from spawn
+                var containerMatrix = [[-1, -1], [1, -1]]; // x and y offsets for container placement from spawn
                 containerMatrix.forEach((offset) => {
                         room.createConstructionSite(spawnPos.x + offset[0], spawnPos.y + offset[1], STRUCTURE_CONTAINER);
                 });
@@ -56,17 +56,11 @@ module.exports = {
             //Build roads to sources only if we have at least one container
             if(room.memory.numContainers > 0) {
 
-                var sources = room.find(FIND_SOURCES);
-                sources.forEach((source) => {
-                    var path = room.findPath(spawnPos, source.pos, {ignoreCreeps: true});
-                    path.forEach((step) => {
-                        room.createConstructionSite(step.x, step.y, STRUCTURE_ROAD);
-                    });
-                });
             }
         }
         //Room level 2, build extensions and cover the base with ramparts.
         if(room.controller.level == 2) {
+            var rampartRadiusFromSpawn = 2;
             if(room.memory.numExtensions == undefined) {
                 room.memory.numExtensions = _.find(Game.structures, (structure) => {
                         return structure.structureType == STRUCTURE_EXTENSION && structure.pos.roomName == room.name; 
@@ -74,19 +68,47 @@ module.exports = {
             }
             if(room.memory.l2placed == undefined) {
                 //How far to propagate ramparts from spawns in spaces.
-                var baseRampartDepth = 4;
+                
                 //find rooms mainspawn
                 var mainSpawn = Game.getObjectById(room.memory.mainSpawn);
                 var spawnPos = mainSpawn.pos; // RoomPosition
-                //propagate ramparts from spawn to baseRampartDepth
-                for(var i = 0; i < baseRampartDepth; i++) {
-                    //propagate ramparts from spawn to baseRampartDepth in a square pattern outwards from the spawn
-                    room.createConstructionSite(spawnPos.x + i, spawnPos.y + i, STRUCTURE_RAMPART);
-                    room.createConstructionSite(spawnPos.x - i, spawnPos.y + i, STRUCTURE_RAMPART);
-                    room.createConstructionSite(spawnPos.x + i, spawnPos.y - i, STRUCTURE_RAMPART);
-                    room.createConstructionSite(spawnPos.x - i, spawnPos.y - i, STRUCTURE_RAMPART);
+            
+                //build ramparts outwards from spawn
+                for(var x = -rampartRadiusFromSpawn; x <= rampartRadiusFromSpawn; x++) {
+                    for(var y = -rampartRadiusFromSpawn; y <= rampartRadiusFromSpawn; y++) {
+                        room.createConstructionSite(spawnPos.x + x, spawnPos.y + y, STRUCTURE_RAMPART);
+                    }
                 }
+                var sources = room.find(FIND_SOURCES);
+                sources.forEach((source) => {
+                    var path = room.findPath(spawnPos, source.pos, {ignoreCreeps: true});
+                    path.forEach((step) => {
+                        room.createConstructionSite(step.x, step.y, STRUCTURE_ROAD);
+                    });
+                });
+                //build extensions
+
+                room.memory.l2placed = true;
             }
+            if(room.memory.l2placed == true) {
+                var mainSpawn = Game.getObjectById(room.memory.mainSpawn);
+                var spawnPos = mainSpawn.pos; // RoomPosition
+                var containerMatrix = [[-1, -1], [1, -1], [-1, 1], [1, 1]]; // x and y offsets for container placement from spawn
+                containerMatrix.forEach((offset) => {
+                        room.createConstructionSite(spawnPos.x + offset[0], spawnPos.y + offset[1], STRUCTURE_CONTAINER);
+                });
+                var extensionMatrix = [[0, -1], [0, 1], [-1, 0], [1, 0]]; // x and y offsets for extension placement from spawn
+                extensionMatrix.forEach((offset) => {
+                        room.createConstructionSite(spawnPos.x + offset[0], spawnPos.y + offset[1], STRUCTURE_EXTENSION);
+                });
+                //ensure we have ramparts protecting the base
+                for(var x = -rampartRadiusFromSpawn; x <= rampartRadiusFromSpawn; x++) {
+                    for(var y = -rampartRadiusFromSpawn; y <= rampartRadiusFromSpawn; y++) {
+                        room.createConstructionSite(spawnPos.x + x, spawnPos.y + y, STRUCTURE_RAMPART);
+                    }
+                }
+        }
+
         }
 
     },

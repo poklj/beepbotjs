@@ -11,49 +11,85 @@ module.exports = {
      * 
      * @param {Creep} creep Creep to run
      */
+    maxEnergyDraw: 25,
     run(creep){
         //Creep keepalive, if it's about to die, renew it with the nearest spawn. Do this before anything else.
         if (creep.ticksToLive < 100) {
             creep.say("I'm dying");
-            var nearestSpawn = creep.pos.findClosestByRange(FIND_MY_SPAWNS);
-            creep.moveTo(nearestSpawn);
-            handshakeActions.refreshMe(nearestSpawn, creep);
-        } else {
+            new RoomVisual(creep.room.name).line(creep.pos, creep.pos.findClosestByRange(FIND_MY_SPAWNS).pos, {color: 'black'});
+            var nearestSpawn;
+            if(creep.memory.nearestSpawn == undefined) {
+               var nearestSpawn = creep.pos.findClosestByRange(FIND_MY_SPAWNS);
+               creep.memory.saviorSpawn = nearestSpawn.id;
+            }
+            var saviorSpawn = Game.getObjectById(creep.memory.saviorSpawn);
+            creep.moveTo(saviorSpawn);
+            //Dump energy into the spawn to prevent death from timeout
+            if(creep.store.energy > 0) {
+                creep.transfer(nearestSpawn, RESOURCE_ENERGY);
+                creep.memory.mode = "";
+            }
+            if(nearestSpawn == undefined) {
+                console.log("Builder: No nearest spawn found");
+                
+            } else {
+                handshakeActions.refreshMe(saviorSpawn, creep);
+                return; //don't do anything else if we're dying and are near a spawn
+            }
+
+        }
             
-        /**
-         * If a creep doesn't have energy, go to the nearest container and withdraw energy, if no container is found, go to the nearest spawn and check it's memory to see if it is mode normal, if it is, withdraw energy from it.
-         * if it is not, go to the nearest source and harvest it.
-         * 
-         * when a creep has energy, go to the nearest structure and build it.
-         * if no structure is found, go to the rooms controller and upgrade it.
-         */
-        //if creep is not near sourcetoMine, deregister it from miningEngine
+        
         if(creep.store.energy == 0) {
-            creep.memory.mode == "empty";
+            creep.memory.mode = "empty";
         }
-        if(creep.store.energy == creep.store.getCapacity()) {
+
+        if(creep.store.energy > 0) {
             creep.memory.mode = "normal";
+
         }
-        if(creep.store.energy != creep.store.getCapacity() && creep.memory.mode == "empty") {
+        if(creep.memory.mode == "empty") {
             var nearestContainer = creep.pos.findClosestByRange(FIND_STRUCTURES, {
                 filter: (structure) => {
                     return (structure.structureType == STRUCTURE_CONTAINER || structure.structureType == STRUCTURE_STORAGE) && structure.store.energy > 0;
                 }
             });
             if(nearestContainer) {
+                creep.say("-- container");
                 creep.moveTo(nearestContainer);
-                creep.withdraw(nearestContainer, RESOURCE_ENERGY);
+                creep.withdraw(nearestContainer, RESOURCE_ENERGY, this.maxEnergyDraw);
             } else {
+                creep.say("-- spawn");
                 var nearestSpawn = creep.pos.findClosestByRange(FIND_MY_SPAWNS);
                 if(nearestSpawn.memory.mode == "normal") {
                     creep.moveTo(nearestSpawn);
-                    creep.withdraw(nearestSpawn, RESOURCE_ENERGY);
+                    creep.withdraw(nearestSpawn, RESOURCE_ENERGY, 35);
                 }
             }
-        } else {
-            var nearestStructure = creep.pos.findClosestByRange(FIND_MY_CONSTRUCTION_SITES);
-            if(nearestStructure) {
+        } 
+        if(creep.memory.mode == "normal") {
+
+            //construction sites in room with highest progress
+            var highestProgress = 0;
+            var highestProgressSite = null;
+            for(var site in creep.room.find(FIND_CONSTRUCTION_SITES)) {
+                if(creep.room.find(FIND_CONSTRUCTION_SITES)[site].progress > highestProgress) {
+                    highestProgress = creep.room.find(FIND_CONSTRUCTION_SITES)[site].progress;
+                    highestProgressSite = creep.room.find(FIND_CONSTRUCTION_SITES)[site];
+                }
+            }
+            // nearest construction site
+            var nearestStructure = creep.pos.findClosestByRange(FIND_MY_CONSTRUCTION_SITES)
+        
+            if(highestProgressSite) {
+                nearestStructure = highestProgressSite;
+            }
+
                 
+;
+            if(nearestStructure) {
+                creep.say("Building");
+                new RoomVisual(creep.pos.roomName).line(creep.pos, nearestStructure.pos, {color: 'blue'});
                 var buildres = creep.build(nearestStructure);
                 if(buildres == ERR_NOT_IN_RANGE) {
                     creep.moveTo(nearestStructure);
@@ -62,10 +98,21 @@ module.exports = {
                     creep.memory.mode = "empty";
                 }
             } else {
-                creep.moveTo(Game.rooms[creep.memory.home].controller);
-                creep.upgradeController(Game.rooms[creep.memory.home].controller);
+                if(creep.memory.spawnID == undefined) {
+                    console.log("Repairer: " + creep.name + " has no spawnID");
+                    creep.memory.spawnID = creep.room.memory.mainSpawn;
+                }
+                var creepsSpawn = Game.getObjectById(creep.memory.spawnID);
+                var controllerToUpgrade = creepsSpawn.room.controller;
+
+                if(controllerToUpgrade.my) {
+                    new RoomVisual(creep.pos.roomName).line(creep.pos, controllerToUpgrade.pos, {color: 'orange'});
+                    if(creep.upgradeController(controllerToUpgrade) == ERR_NOT_IN_RANGE) {
+                        creep.moveTo(controllerToUpgrade);
+                    }
+                }
             }
         }
         }
     }
-}
+

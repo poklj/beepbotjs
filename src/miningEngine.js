@@ -1,4 +1,5 @@
 const gamestate = require("./gamestate");
+const roomEngine = require("./roomEngine");
 
 /**
  * Mining manager, responsible for managing the mining process of a room.
@@ -28,10 +29,36 @@ module.exports = {
                 if(room.memory.sourcesActiveBots[source.id] == undefined) {
                     room.memory.sourcesActiveBots[source.id] = 0;
                 }
+                
             }
             console.log("Initialized sources space in room " + room.name);
+                
+
+
+            //adjacent room sources:
+            // if(room.memory.adjacentSources == undefined) {
+            //     var adjacentRooms = roomEngine.getAdjacentRooms(room);
+            //     for(var i = 0; i < adjacentRooms.length; i++) {
+            //         var adjacentRoom =  Game.rooms[adjacentRooms[i]];
+            //         //for all adjacent rooms, get their source ID's and add them to the room memory
+            //         var adjacentSources = adjacentRoom.find(FIND_SOURCES);
+            //         for(var j = 0; j < adjacentSources.length; j++) {
+            //             room.memory.adjacentSources.push()
+            //         }
+            //     }
+            // }
+        }
+        if(room.memory.sourcesActiveBots != undefined) {
+            //scan creeps for sources that are currently being mined, and update the room memory accordingly, this is a hack to protect from dead harvesters
+            for(var sourceId in room.memory.sourcesActiveBots) {
+                var source = Game.getObjectById(sourceId);
+                var amountOfCreepsMiningSource = _.filter(Game.creeps, (creep) => { return creep.memory.sourceToMine == sourceId; });
+                room.memory.sourcesActiveBots[sourceId] = amountOfCreepsMiningSource.length;
+            }
         }
     },
+
+    
 
     /**
      * give a source that has open space to a creep
@@ -53,8 +80,8 @@ module.exports = {
 
                 // room.memory.sourcesActiveBots[sourceID]++; // Increment the number of creeps mining this source            
                 if(room.memory.sourcesActiveBots[sourceID] < room.memory.sourcesSpace[sourceID]) {
-                    //If the source has open space, give it to the creep
-                    room.memory.sourcesActiveBots[sourceID]++;
+                    //If the source has open space, give it to the creep, let the repeated initializer handle incrementing the number of creeps mining this source 
+                    // room.memory.sourcesActiveBots[sourceID]++;
                     console.log("Giving source " + sourceID + " to creep");
                     return sourceID;
                 }
@@ -89,7 +116,7 @@ module.exports = {
             for (var y = sourcePos.y - sourceRange; y <= sourcePos.y + sourceRange; y++) {
                 var pos = new RoomPosition(x, y, sourcePos.roomName);
                 if (pos.isNearTo(sourcePos)) {
-                    if (pos.lookFor(LOOK_TERRAIN)[0] == 'plain') {
+                    if (pos.lookFor(LOOK_TERRAIN)[0] == 'plain' || pos.lookFor(LOOK_TERRAIN)[0] == 'swamp') {
                         sourceSpace++;
                     }
                 }
