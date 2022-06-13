@@ -60,6 +60,7 @@ gulp.task('screeps-local', function() {
     .pipe(gulp.dest(localCredentials.localUsrStorageLocation));
 });
 gulp.task('screeps-ptr', function() {
+  printRemoveEndpointRatelimiting();
   return gulp.src('src/*.js')
       .pipe(screeps(credentialsPtr));
 })

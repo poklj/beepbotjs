@@ -3,6 +3,7 @@ var handshakeActions = require("./handshakeActions");
 module.exports = {
     body: [WORK, CARRY, MOVE],
     role: 'repairer',
+    priority: 2,
     /**
      * Run the creep
      * @param {Creep} creep
@@ -57,7 +58,7 @@ module.exports = {
             else {
                 var nearestSpawn = creep.pos.findClosestByRange(FIND_MY_SPAWNS, {
                     filter: (spawn) => {
-                        return spawn.memory.mode == "normal";
+                        return spawn.memory.mode == "normal" || spawn.store.getFreeCapacity(RESOURCE_ENERGY) == 0;
                     }
                 });
                 if(nearestSpawn) {

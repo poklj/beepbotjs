@@ -62,7 +62,7 @@ module.exports = {
                 this.registerCreate(spawn, 'builder');
             }
             // if room level is 1 and there are no repairers, request a repairer
-            if (spawn.room.controller.level == 1 && numOfRepairersInRoom + numOfRepairersQueued <= 0 ) {
+            if (spawn.room.controller.level >= 1 && numofContainersInRoom >= 1 && numOfRepairersInRoom + numOfRepairersQueued <= 0 ) {
                 console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has no repairers, requesting more");
                 this.registerCreate(spawn, 'repairer');
             }
@@ -92,10 +92,14 @@ module.exports = {
 
         if(this.canCreateCreep(spawn)) {
             console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " can create creep");
+            //for every entry in the queue, get the roles priorty lower is better, undefined is always last.
+            var queue = spawn.memory.queue;
+            //sort by priorty
+            spawn.memory.queue = _.sortBy(queue, (str) => {
+                creepUtil.getPriorityByRole(str);
+            });
             this.spawnNextInQueue(spawn);
         }
-
-        //ingress for spawn behavior
 
     },
 

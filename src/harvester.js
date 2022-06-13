@@ -5,6 +5,7 @@ const miningEngine = require('./miningEngine');
 module.exports = {
     body: [WORK, CARRY, MOVE],
     role: 'harvester',
+    priority: 1, //Higher priority means it will be sorted to the top of a spawn queue
     /**
      * 
      * @param {Creep} creep 
@@ -53,13 +54,12 @@ module.exports = {
             var harvestAttempt = creep.harvest(sourceToMine);
 
             if(harvestAttempt == ERR_NOT_IN_RANGE) {
-                creep.say("moving to " + creep.memory.sourceToMine);
                 creep.moveTo(sourceToMine);
                 new RoomVisual(creep.pos.roomName).line(creep.pos, sourceToMine.pos, {color: 'red'});
                 console.log("Harvester" + Game.time + ": " + creep.name + " moving to source" + creep.memory.sourceToMine);
             }
             else if (harvestAttempt == OK) {
-                creep.say("bonk");
+                new RoomVisual(creep.pos.roomName).line(creep.pos, sourceToMine.pos, {color: 'red', lineStyle: 'dashed'});
             }
         } else {
             miningEngine.freeSourceSlot(creep.memory.sourceToMine, creep.room);
@@ -84,6 +84,7 @@ module.exports = {
                     creep.moveTo(nearestSpawn);
                 }
             }
+
             else if(nearestContainer != undefined) {
                 new RoomVisual(creep.pos.roomName).line(creep.pos, nearestContainer.pos, {color: 'green'});
                 var transRes = creep.transfer(nearestContainer, RESOURCE_ENERGY);
@@ -92,45 +93,23 @@ module.exports = {
                 }
             }
 
-    
+            //loiter near a spawn if we can't deposit energy anywhere
+            else {
+                var spawnPos = nearestSpawn.pos;
 
-            
+                var distanceFromSpawn = 5; // Distance to loiter from the spawn
+                var angle = 50; // Angle to loiter around the spawn
+
+                var x = spawnPos.x + Math.round(distanceFromSpawn * Math.cos(angle));
+                var y = spawnPos.y + Math.round(distanceFromSpawn * Math.sin(angle));
+                var loiterPos = new RoomPosition(x, y, spawnPos.roomName);
+
+                new RoomVisual(creep.room.name).circle(loiterPos, {color: 'red', radius: 1});
+                creep.moveTo(loiterPos);
+
+            }
 
 
-
-            // // If a spawn isn't full, carry energy to it
-            // var spawn = creep.pos.findClosestByRange(FIND_MY_SPAWNS, {
-            //     filter: (spawn) => { spawn.store.energy < spawn.store.getCapacity(); }
-            //     }
-            // );
-            // if(spawn != undefined) {
-            //     new RoomVisual(creep.pos.roomName).line(creep.pos, spawn.pos, {color: 'green'});
-            //     if(creep.transfer(spawn, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-            //         creep.moveTo(spawn);
-            //     }
-            // }
-            // // If a storage isn't full, carry energy to it
-            // if(creep.room.storage != undefined) {
-            //     if(creep.transfer(creep.room.storage, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-            //         creep.moveTo(creep.room.storage);
-            //     }
-            // }
-            // //carry energy to closest container
-            // if(creep.room.storage == undefined && creep.room.find(FIND_STRUCTURES, {filter: (structure) => {return structure.structureType == STRUCTURE_CONTAINER}}).length > 0) {
-            //     var containers = creep.room.find(FIND_STRUCTURES, {
-            //         filter: (structure) => {
-            //             return (structure.structureType == STRUCTURE_CONTAINER || structure.structureType == STRUCTURE_STORAGE) && structure.store.energy < structure.store.getCapacity();
-            //         }
-            //     });
-            //     if(containers.length > 0) {
-            //         new RoomVisual(creep.pos.roomName).line(creep.pos, containers[0].pos, {color: 'green'});
-            //         if(creep.transfer(containers[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-            //             creep.moveTo(containers[0]);
-            //         }
-            //     }
-            // }
-            // //if storage is full, go to spawn and transfer energy to spawn
-           
         }
     }
 

@@ -7,6 +7,7 @@ const miningEngine = require("./miningEngine");
 module.exports = {
     role: 'builder',
     body: [MOVE,WORK,CARRY,CARRY],
+    priority: 3,
     /**
      * 
      * @param {Creep} creep Creep to run
@@ -59,11 +60,31 @@ module.exports = {
                 creep.moveTo(nearestContainer);
                 creep.withdraw(nearestContainer, RESOURCE_ENERGY, this.maxEnergyDraw);
             } else {
-                creep.say("-- spawn");
                 var nearestSpawn = creep.pos.findClosestByRange(FIND_MY_SPAWNS);
                 if(nearestSpawn.memory.mode == "normal") {
+                    creep.say("-- spawn");
                     creep.moveTo(nearestSpawn);
                     creep.withdraw(nearestSpawn, RESOURCE_ENERGY, 35);
+                } else {
+                    if(nearestSpawn.store.getFreeCapacity(RESOURCE_ENERGY) == 0) {
+                        creep.moveTo(nearestSpawn);
+                        creep.withdraw(nearestSpawn, RESOURCE_ENERGY, 15); //Sip a little from a maxed spawn.
+                    }
+
+                    //loiter around the spawn inside a circle nearby until it's able to pull energy
+                    var spawnPos = nearestSpawn.pos;
+
+                    var distanceFromSpawn = 4; // Distance to loiter from the spawn
+                    var angle = 5; // Angle to loiter around the spawn
+
+                    var x = spawnPos.x + Math.round(distanceFromSpawn * Math.cos(angle));
+                    var y = spawnPos.y + Math.round(distanceFromSpawn * Math.sin(angle));
+                    var loiterPos = new RoomPosition(x, y, spawnPos.roomName);
+
+                    new RoomVisual(creep.room.name).circle(loiterPos, {color: 'red', radius: 1});
+                    creep.moveTo(loiterPos);
+
+            
                 }
             }
         } 
@@ -79,11 +100,13 @@ module.exports = {
                 }
             }
             // nearest construction site
+            
             var nearestStructure = creep.pos.findClosestByRange(FIND_MY_CONSTRUCTION_SITES)
-        
             if(highestProgressSite) {
                 nearestStructure = highestProgressSite;
             }
+
+            
 
                 
 ;

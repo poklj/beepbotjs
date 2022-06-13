@@ -46,4 +46,29 @@ module.exports = {
             defenderBasic.run(creep);
         }
     },
+    /**
+     * return the priorty of a creep by it's role, if we don't have a priorty for a given role or the role isn't defined in this function, reutrn 99
+     * @param {string} role
+     * @returns {number} the priority of the role
+     * @memberof creepUtil
+     */
+    getPriorityByRole(role) {
+        var priority = 99;
+        if (role == "harvester") {
+            priority = harvester.priority;
+        }
+        if(role == "builder") {
+            priority = builder.priority;
+        }
+        if(role == "maintainer") {
+            priority = maintainer.priority;
+        }
+        if(role == "repairer") {
+            priority = repairer.priority;
+        }
+        if(role == "defenderBasic") {
+            priority = defenderBasic.priority;
+        }
+        return priority;
+    }
 }
