@@ -97,6 +97,12 @@ module.exports = {
                 console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has more than 1 container, requesting maintainer");
                 this.registerCreate(spawn, 'maintainer');
             }
+            //if there's any enemies in the room spawn some defenders
+            if(spawn.room.find(FIND_HOSTILE_CREEPS).length > 0 && numOfBasicDefendersInRoom + numOfBasicDefendersQueued < 2) {
+                console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has enemies, requesting defenders");
+                this.registerCreate(spawn, 'defenderBasic');
+            }
+            
             //if room level is 2 or higher, queue a repairer
             if(spawn.room.controller.level >= 2 && numOfRepairersInRoom + numOfRepairersQueued < 3) {
                 console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has room level of " + spawn.room.controller.level + ", requesting repairer");

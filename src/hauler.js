@@ -34,30 +34,58 @@ module.exports = {
             }
         }
 
-        // if we don't have any energy go find some
+        // If we aren't full yet go find some energy
         if (creep.store.getFreeCapacity() > 0) {
-
-            //Find the nearest creep that has energy and is role Harvester
-            let nearestHarvester = creep.pos.findClosestByPath(FIND_MY_CREEPS, {
-                filter: (c) => c.memory.role == 'harvester' && c.carry.energy < c.carryCapacity
-            });
             //nearest tombstone
             let nearestTombstone = creep.pos.findClosestByPath(FIND_TOMBSTONES);
 
-            //if there's a tombstone, harvest from it
-            if (nearestTombstone != undefined) {
-                new RoomVisual(creep.pos.roomName).line(creep.pos, nearestTombstone.pos, {color: 'cyan'});
-                if (creep.withdraw(nearestTombstone, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-                    creep.moveTo(nearestTombstone);
+            var harvesters = creep.room.find(FIND_MY_CREEPS, {
+                filter: (creep) => {
+                    return creep.memory.role == 'harvester';
+                }
+            });
+
+            var adjacentHarvester = false;
+            for (var i = 0; i < harvesters.length; i++) {
+                if (creep.pos.isNearTo(harvesters[i])) {
+                    adjacentHarvester = true;
                 }
             }
 
-            //go and sit next to the harvester
-            if (nearestHarvester) {
-                creep.moveTo(nearestHarvester);
-                new RoomVisual(creep.pos.roomName).line(creep.pos, nearestHarvester.pos, {color: 'cyan'});
+            //Only look to loiter next to a harvester or find a tombstone if we're not already loitering around a harvester
+            if(adjacentHarvester == false) {
+                //if there's a tombstone, harvest from it
+                if (nearestTombstone != undefined) {
+                    new RoomVisual(creep.pos.roomName).line(creep.pos, nearestTombstone.pos, {color: 'blue'});
+                    if (creep.withdraw(nearestTombstone, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                        creep.moveTo(nearestTombstone);
+                    }
+                }
+                //if a harvester has haulers nearby, drop it from the list of harvesters that need haulers
+                for (var i = 0; i < harvesters.length; i++) {
+                    var harvester = harvesters[i];
+                    var harvesterAdjacentHaulers = harvester.pos.findInRange(FIND_MY_CREEPS, 1, {
+                        filter: (creep) => {
+                            return creep.memory.role == 'hauler';
+                        }
+                    });
+                    if(harvesterAdjacentHaulers.length > 0) {
+                        harvesters.splice(i, 1);
+                    }
+                }
+                //find the closest harvester withouth a hauler next to it
+                var closestHarvester = creep.pos.findClosestByPath(harvesters, {
+                    filter: (creep) => {
+                        return creep.memory.role == 'harvester';
+                    }
+                });
+                // movce to the harvester without a hauler next to it
+                if(closestHarvester != undefined) {
+                    new RoomVisual(creep.pos.roomName).line(creep.pos, closestHarvester.pos, {color: 'cyan'});
+                    creep.moveTo(closestHarvester);
+                }
             }
-            
+
 
         } else {
 
@@ -108,5 +136,6 @@ module.exports = {
 
 
         } 
-        }
+     }
+    
 };

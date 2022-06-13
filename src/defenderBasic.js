@@ -2,7 +2,7 @@
 
 var handshakeActions = require("./handshakeActions");
 module.exports = {
-    body: [MOVE, MOVE, MOVE, RANGED_ATTACK, RANGED_ATTACK, ATTACK, ATTACK, HEAL],
+    body: [MOVE, MOVE, ATTACK, ATTACK],
     role: 'defenderBasic',
     priorty: 8, // TODO: make this a floating priority based on an contextual threat mode, so that if we need defenders we can boost them up or leave them if we don't need them.
     /**
