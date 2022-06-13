@@ -1,3 +1,5 @@
+// jshint esversion: 6
+
 var handshakeActions = require("./handshakeActions");
 module.exports = {
     body: [MOVE, MOVE, MOVE, RANGED_ATTACK, RANGED_ATTACK, ATTACK, ATTACK, HEAL],

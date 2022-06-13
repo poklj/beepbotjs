@@ -1,9 +1,10 @@
-
+// jshint esversion: 6
 var harvester = require("./harvester");
 var builder = require("./builder");
 var maintainer = require("./maintainer");
 var repairer = require("./repairer");
 const defenderBasic = require("./defenderBasic");
+const hauler = require("./hauler");
 
 module.exports = {
     bodyFromRole(role){
@@ -17,6 +18,8 @@ module.exports = {
             return repairer.body;
         } else if(role == "defenderBasic") {
             return defenderBasic.body;
+        } else if(role == "hauler") {
+            return hauler.body;
         }
     },
 
@@ -45,6 +48,10 @@ module.exports = {
         if(creepRole == "defenderBasic") {
             defenderBasic.run(creep);
         }
+        if(creepRole == "hauler") {
+            hauler.run(creep);
+        }
+
     },
     /**
      * return the priorty of a creep by it's role, if we don't have a priorty for a given role or the role isn't defined in this function, reutrn 99
@@ -69,6 +76,10 @@ module.exports = {
         if(role == "defenderBasic") {
             priority = defenderBasic.priority;
         }
+        if(role == "hauler") {
+            priority = harvester.priority;
+        }
+
         return priority;
     }
 }

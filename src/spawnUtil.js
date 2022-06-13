@@ -24,6 +24,8 @@ module.exports = {
 
         console.log("SpawnBehavior" + Game.time + ": " + spawn.name);
         //Bootstrap flag
+        //room the spawn is in
+        let room = spawn.room;
 
         var numOfHarvestersInRoom = _.sum(Game.creeps, (creep) => creep.memory.role == "harvester" && creep.room.name == spawn.room.name);
         var numOfBuildersInRoom = _.sum(Game.creeps, (creep) => creep.memory.role == "builder" && creep.room.name == spawn.room.name);
@@ -37,6 +39,17 @@ module.exports = {
         var numOfRepairersQueued = _.sum(spawn.memory.queue, (str) => str == "repairer");
         var numOfBasicDefendersInRoom =  _.sum(Game.creeps, (creep) => creep.memory.role == "defenderBasic" && creep.room.name == spawn.room.name);
         var numOfBasicDefendersQueued = _.sum(spawn.memory.queue, (str) => str == "defenderBasic");
+        var numOfHaulersInRoom = _.sum(Game.creeps, (creep) => creep.memory.role == "hauler" && creep.room.name == spawn.room.name);
+        var numOfHaulersQueued = _.sum(spawn.memory.queue, (str) => str == "hauler");
+
+
+        var numOfFreeSourceSpaces = 0;
+        //Number of source spaces in the room
+        if(room.memory.sourcesSpace != undefined) {
+            for(var source in room.memory.sourcesSpace) {
+                numOfFreeSourceSpaces += room.memory.sourcesSpace[source];
+            }
+        }
 
 
         new RoomVisual(spawn.pos.roomName).text("Queue: " + numOfQueued, new RoomPosition(spawn.pos.x , spawn.pos.y + 1, spawn.pos.roomName) , {color: 'white'});
@@ -45,10 +58,22 @@ module.exports = {
         console.log("Builders: " + numOfBuildersInRoom + " Queued: " + numOfBuildersQueued);
         spawn.memory.mode = "normal";
         
-            if(numOfHarvestersInRoom + numOfHarvestersQueued <= 5 ) {
-                console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has less than 2 harvesters, requesting more");
+            // if(numOfHarvestersInRoom + numOfHarvestersQueued <= 5 ) {
+            //     console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has less than 2 harvesters, requesting more");
+            //     this.registerCreate(spawn, 'harvester');
+            // }
+            //queue enough harvesters to fill every source space in the room
+            if(numOfHarvestersInRoom + numOfHarvestersQueued < numOfFreeSourceSpaces) {
+                console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has less than " + numOfFreeSourceSpaces + " harvesters, requesting more");
                 this.registerCreate(spawn, 'harvester');
             }
+            // queue haulers up to half the number of harvesters that the room would queue
+            if(numOfHaulersInRoom + numOfHaulersQueued < numOfFreeSourceSpaces / 2) {
+                console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has less than " + numOfFreeSourceSpaces / 2 + " haulers, requesting more");
+                this.registerCreate(spawn, 'hauler');
+            }
+
+
             if(spawn.room.controller.level >=2 && numOfHarvestersInRoom + numOfHarvestersQueued <= 10 ) {
                 console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has less than 10 harvesters, requesting more");
                 this.registerCreate(spawn, 'harvester');

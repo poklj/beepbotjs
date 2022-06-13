@@ -3,7 +3,7 @@ var handshakeActions = require("./handshakeActions");
 module.exports = {
     body: [WORK, CARRY, MOVE],
     role: 'repairer',
-    priority: 2,
+    priority: 4,
     /**
      * Run the creep
      * @param {Creep} creep

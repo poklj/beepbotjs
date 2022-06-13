@@ -1,6 +1,7 @@
 {
     "typeAcquisition": {
       "include": ["screeps", "lodash"]
+      
     }
   }
   
