@@ -14,6 +14,24 @@ module.exports = {
      */
     maxEnergyDraw: 25,
     run(creep){
+        //if the room controller is about to downgrade, pull 5 energy and upgrade it
+        if(creep.room.controller.ticksToDowngrade < 100) {
+            if(creep.carry.energy < 5) {
+                //grab 5 energy from spawn
+                var nearestSpawn = creep.pos.findClosestByRange(FIND_MY_SPAWNS);
+                creep.moveTo(nearestSpawn);
+                creep.withdraw(nearestSpawn, RESOURCE_ENERGY, 5);
+            }
+            else {
+                //upgrade the controller
+                creep.moveTo(creep.room.controller);
+                creep.upgradeController(creep.room.controller);
+            }
+            return;
+        }
+
+
+
         //Creep keepalive, if it's about to die, renew it with the nearest spawn. Do this before anything else.
         if (creep.ticksToLive < 100) {
             creep.say("I'm dying");
@@ -43,6 +61,28 @@ module.exports = {
         
         if(creep.store.energy == 0) {
             creep.memory.mode = "empty";
+            //Empty container loitering
+            var container = creep.pos.findClosestByRange(FIND_STRUCTURES, {
+                filter: (structure) => {
+                    return (structure.structureType == STRUCTURE_CONTAINER) &&
+                        (structure.store.energy > 0);
+                }
+            });
+            if(!container) {
+                var nearestSpawn = creep.pos.findClosestByRange(FIND_MY_SPAWNS);
+                var spawnPos = nearestSpawn.pos;
+
+                var distanceFromSpawn = 5; // Distance to loiter from the spawn
+                var angle = 70; // Angle to loiter around the spawn
+
+                var x = spawnPos.x + Math.round(distanceFromSpawn * Math.cos(angle));
+                var y = spawnPos.y + Math.round(distanceFromSpawn * Math.sin(angle));
+                var loiterPos = new RoomPosition(x, y, spawnPos.roomName);
+
+                new RoomVisual(creep.room.name).circle(loiterPos, {color: '', radius: 1});
+                creep.moveTo(loiterPos);
+
+            }
         }
 
         if(creep.store.energy > 0) {

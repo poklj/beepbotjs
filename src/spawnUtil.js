@@ -1,3 +1,5 @@
+//jshinter esversion: 6
+
 /**
  * The spawn module, defines Spawn behavior.
  * @module spawn
@@ -68,16 +70,11 @@ module.exports = {
                 this.registerCreate(spawn, 'harvester');
             }
             // queue haulers up to half the number of harvesters that the room would queue
-            if(numOfHaulersInRoom + numOfHaulersQueued < numOfFreeSourceSpaces / 2) {
+            if(numOfHaulersInRoom + numOfHaulersQueued < numOfFreeSourceSpaces ) {
                 console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has less than " + numOfFreeSourceSpaces / 2 + " haulers, requesting more");
                 this.registerCreate(spawn, 'hauler');
             }
-
-
-            if(spawn.room.controller.level >=2 && numOfHarvestersInRoom + numOfHarvestersQueued <= 10 ) {
-                console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has less than 10 harvesters, requesting more");
-                this.registerCreate(spawn, 'harvester');
-            }
+            
             if(spawn.room.controller.level == 1 && numOfBuildersInRoom + numOfBuildersQueued <= 2 ) {
                     console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has less than 2 builders, requesting more");
                     this.registerCreate(spawn, 'builder');
@@ -98,17 +95,17 @@ module.exports = {
                 this.registerCreate(spawn, 'maintainer');
             }
             //if there's any enemies in the room spawn some defenders
-            if(spawn.room.find(FIND_HOSTILE_CREEPS).length > 0 && numOfBasicDefendersInRoom + numOfBasicDefendersQueued < 2) {
-                console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has enemies, requesting defenders");
-                this.registerCreate(spawn, 'defenderBasic');
-            }
-            
+            // if(spawn.room.find(FIND_HOSTILE_CREEPS).length > 0 && numOfBasicDefendersInRoom + numOfBasicDefendersQueued < 2) {
+            //     console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has enemies, requesting defenders");
+            //     this.registerCreate(spawn, 'defenderBasic');
+            // }
+
             //if room level is 2 or higher, queue a repairer
             if(spawn.room.controller.level >= 2 && numOfRepairersInRoom + numOfRepairersQueued < 3) {
                 console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has room level of " + spawn.room.controller.level + ", requesting repairer");
                 this.registerCreate(spawn, 'repairer');
             }
-            if(spawn.room.controller.level >=2 && numOfBasicDefendersInRoom + numOfBasicDefendersQueued < 4) {
+            if(spawn.room.controller.level >= 2 && numOfBasicDefendersInRoom + numOfBasicDefendersQueued < 4) {
                 console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has room level of " + spawn.room.controller.level + ", requesting basic defender");
                 this.registerCreate(spawn, 'defenderBasic');
             }
@@ -117,6 +114,11 @@ module.exports = {
             console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has " + numOfQueued + " queued");
             spawn.memory.mode = "hasQueue";
         } else {
+            spawn.memory.mode = "normal";
+        }
+
+        // If we're over half saturation, queue allow builders to access spawn energy, only for level 1 rooms
+        if((numOfHarvestersInRoom + numOfHaulersInRoom) /2  > numOfFreeSourceSpaces / 2 && numofContainersInRoom <= 2 && spawn.room.controller.level == 1) {
             spawn.memory.mode = "normal";
         }
         //Spawn behavior

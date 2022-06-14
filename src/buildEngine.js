@@ -107,6 +107,13 @@ module.exports = {
                         room.createConstructionSite(spawnPos.x + x, spawnPos.y + y, STRUCTURE_RAMPART);
                     }
                 }
+                //build some roads to the nearest wall terrain  to the main spawn
+                var nearestWallToSpawn = room.find(FIND_STRUCTURES, {
+                    filter: (structure) => {
+                        return structure.structureType == STRUCTURE_WALL && structure.pos.getRangeTo(spawnPos) <= 2;
+                    }
+                });
+            
         }
 
         }

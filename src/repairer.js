@@ -38,7 +38,29 @@ module.exports = {
 
         if(creep.store.energy == 0) {
             creep.memory.mode = "empty";
-        }
+            //loiter nearby if we are empty and no nearby container has energy
+            var container = creep.pos.findClosestByRange(FIND_STRUCTURES, {
+                filter: (structure) => {
+                    return (structure.structureType == STRUCTURE_CONTAINER) &&
+                        (structure.store.energy > 0);
+                }
+            });
+            if(!container) {
+                var nearestSpawn = creep.pos.findClosestByRange(FIND_MY_SPAWNS);
+                var spawnPos = nearestSpawn.pos;
+
+                var distanceFromSpawn = 5; // Distance to loiter from the spawn
+                var angle = 70; // Angle to loiter around the spawn
+
+                var x = spawnPos.x + Math.round(distanceFromSpawn * Math.cos(angle));
+                var y = spawnPos.y + Math.round(distanceFromSpawn * Math.sin(angle));
+                var loiterPos = new RoomPosition(x, y, spawnPos.roomName);
+
+                new RoomVisual(creep.room.name).circle(loiterPos, {color: 'purple', radius: 1});
+                creep.moveTo(loiterPos);
+
+            }
+        } 
         if(creep.store.energy > 0) {
             creep.memory.mode = "normal";
         }
@@ -50,6 +72,7 @@ module.exports = {
                     return (structure.structureType == STRUCTURE_CONTAINER || structure.structureType == STRUCTURE_STORAGE) && structure.store.energy > 0;
                 }
             });
+
             if(nearestContainer) {
                 creep.moveTo(nearestContainer);
                 creep.withdraw(nearestContainer, RESOURCE_ENERGY, this.energyMaxWithdrawl);

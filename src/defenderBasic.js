@@ -45,7 +45,25 @@ module.exports = {
             }
 
         }
+        //If we don't have a hostile creep, loiter nearby exits
+        else {
 
+            //nearests spawns
+            var nearestSpawn = creep.pos.findClosestByRange(FIND_MY_SPAWNS);
+            var spawnPos = nearestSpawn.pos;
+
+            var distanceFromSpawn = 6; // Distance to loiter from the spawn
+            var angle = 90; // Angle to loiter around the spawn
+
+            var x = spawnPos.x + Math.round(distanceFromSpawn * Math.cos(angle));
+            var y = spawnPos.y + Math.round(distanceFromSpawn * Math.sin(angle));
+            var loiterPos = new RoomPosition(x, y, spawnPos.roomName);
+
+            new RoomVisual(creep.room.name).circle(loiterPos, {fill: 'red', radius: 1});
+            creep.moveTo(loiterPos);
+        }
+
+    
     }
         
 }

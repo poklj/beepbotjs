@@ -1,4 +1,6 @@
 // jshint esversion: 6
+var handshakeActions = require("./handshakeActions");
+
 
 module.exports = {
     role: 'hauler',
@@ -36,8 +38,12 @@ module.exports = {
 
         // If we aren't full yet go find some energy
         if (creep.store.getFreeCapacity() > 0) {
-            //nearest tombstone
-            let nearestTombstone = creep.pos.findClosestByPath(FIND_TOMBSTONES);
+            //nearest tombstone with energy in it
+            var nearestTombstone = creep.pos.findClosestByRange(FIND_TOMBSTONES, {
+                filter: (tombstone) => {
+                    return tombstone.store.energy > 0;
+                }
+            });
 
             var harvesters = creep.room.find(FIND_MY_CREEPS, {
                 filter: (creep) => {
@@ -62,6 +68,7 @@ module.exports = {
                     }
                 }
                 //if a harvester has haulers nearby, drop it from the list of harvesters that need haulers
+                // union harvesters without a hauler nearby with harvesters that are next to a source
                 for (var i = 0; i < harvesters.length; i++) {
                     var harvester = harvesters[i];
                     var harvesterAdjacentHaulers = harvester.pos.findInRange(FIND_MY_CREEPS, 1, {
@@ -69,11 +76,15 @@ module.exports = {
                             return creep.memory.role == 'hauler';
                         }
                     });
-                    if(harvesterAdjacentHaulers.length > 0) {
+                    var harvestersAdjacentSources = harvester.pos.findInRange(FIND_SOURCES, 1);
+
+                    //remove harvesters that have a hauler nearby or are not next to a source
+                    if (harvesterAdjacentHaulers.length > 0 || harvestersAdjacentSources.length == 0) {
                         harvesters.splice(i, 1);
+                        i--;
                     }
                 }
-                //find the closest harvester withouth a hauler next to it
+                // find the closest harvester withouth a hauler next to it
                 var closestHarvester = creep.pos.findClosestByPath(harvesters, {
                     filter: (creep) => {
                         return creep.memory.role == 'harvester';
@@ -83,6 +94,21 @@ module.exports = {
                 if(closestHarvester != undefined) {
                     new RoomVisual(creep.pos.roomName).line(creep.pos, closestHarvester.pos, {color: 'cyan'});
                     creep.moveTo(closestHarvester);
+                } else {
+                    // move to any harvester without a hauler
+                    creep.moveTo(harvesters[0]);
+                }
+                //if there's no haulerless harvesters, move to closest harvester with a free adjacent space
+                if(harvesters.length == 0) {
+                    var closestHarvester = creep.pos.findClosestByPath(FIND_CREEPS, {
+                        filter: (creep) => {
+                            return creep.memory.role == 'harvester';
+                        }
+                    });
+                    if(closestHarvester != undefined) {
+                        new RoomVisual(creep.pos.roomName).line(creep.pos, closestHarvester.pos, {color: 'purple'});
+                        creep.moveTo(closestHarvester);
+                    }
                 }
             }
 
