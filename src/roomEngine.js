@@ -7,7 +7,14 @@ module.exports = {
      * get all rooms adjacent to the given room
         * @param {Room} room
         * @returns {Room[]}
-
+    */
+    getAdjacentRooms(room) {
+        var adjacentRooms = [];
+        for(var exit in Game.map.describeExits(room.name)) {
+            adjacentRooms.push(Game.rooms[exit]); //Add the adjacent room to the array
+        }
+        return adjacentRooms;
+    },
     /**
      * Calculate Room Viability, for now, just give us the total score of all tiles within the room divided by the total tiles in the room . This is a simple heuristic using some arbitrary scoring criteria.
 

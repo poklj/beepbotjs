@@ -131,7 +131,10 @@ module.exports = {
                 path.forEach((step) => {
                     //if the step does not have a structure on it, build a road
                     if(!room.lookForAt(LOOK_STRUCTURES, step.x, step.y).length) {
-                        room.createConstructionSite(step.x, step.y, STRUCTURE_ROAD);
+                        //if the step does not have a source on it, build a road
+                        if(!room.lookForAt(LOOK_SOURCES, step.x, step.y).length) {
+                            room.createConstructionSite(step.x, step.y, STRUCTURE_ROAD);
+                        }
                     }
                 });            
         }

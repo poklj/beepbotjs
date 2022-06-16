@@ -5,6 +5,25 @@ var handshakeActions = require("./handshakeActions");
 module.exports = {
     role: 'hauler',
     body: [CARRY, CARRY, MOVE, MOVE],
+    /**
+     * logic for increasing body type of hauler based on maxiumum build energy
+    * @param {StructureSpawn} spawn
+    */
+    // getBody(spawn) {
+    //     var body = this.body;
+    //     //get the spawns maxiumum energy capacity
+    //     var maxEnergy = spawn.room.energyCapacityAvailable;
+    //     //get the current energy level
+    //     var currentEnergy = spawn.room.energyAvailable;
+    //     //count parts in body
+    //     body = body.map(function(part) {
+    //         return part;
+    //     });
+       
+        //add parts until max build energy is reached
+
+        
+    //},
     priority: 2,
     /**
      * 
