@@ -7,7 +7,6 @@ module.exports = {
      * @param {Creep} creep 
      */
     refreshMe(spawn, creep){
-        console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " Refreshing creep: " + creep.name);  
         spawn.renewCreep(creep);
     },
         

@@ -93,22 +93,20 @@ module.exports = {
                 // movce to the harvester without a hauler next to it
                 if(closestHarvester != undefined) {
                     new RoomVisual(creep.pos.roomName).line(creep.pos, closestHarvester.pos, {color: 'cyan'});
-                    creep.moveTo(closestHarvester);
+                    creep.moveTo(closestHarvester, {reusePath: 50});
                 } else {
                     // move to any harvester without a hauler
                     creep.moveTo(harvesters[0]);
                 }
                 //if there's no haulerless harvesters, move to closest harvester with a free adjacent space
                 if(harvesters.length == 0) {
-                    var closestHarvester = creep.pos.findClosestByPath(FIND_CREEPS, {
+                    var closestHarvester = creep.pos.findClosestByPath(FIND_MY_CREEPS, {
                         filter: (creep) => {
                             return creep.memory.role == 'harvester';
                         }
                     });
-                    if(closestHarvester != undefined) {
-                        new RoomVisual(creep.pos.roomName).line(creep.pos, closestHarvester.pos, {color: 'purple'});
-                        creep.moveTo(closestHarvester);
-                    }
+
+
                 }
             }
 
@@ -122,6 +120,12 @@ module.exports = {
              * 
              */
             var nearestSpawn = creep.pos.findClosestByRange(FIND_MY_SPAWNS);
+            if(nearestSpawn == undefined) {
+                //set nearest spawn to the savior spawn
+                nearestSpawn = Game.getObjectById(creep.memory.saviorSpawn);
+                creep.moveTo(nearestSpawn);
+                return;
+            }
             var nearestContainer = creep.pos.findClosestByRange(FIND_STRUCTURES, {
                 filter: (structure) => {
                     return (structure.structureType == STRUCTURE_CONTAINER || structure.structureType == STRUCTURE_STORAGE) && structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
@@ -132,7 +136,23 @@ module.exports = {
                 var transRes = creep.transfer(nearestSpawn, RESOURCE_ENERGY);
                 new RoomVisual(creep.pos.roomName).line(creep.pos, nearestSpawn.pos, {color: 'green'});
                 if (transRes == ERR_NOT_IN_RANGE) {
-                    creep.moveTo(nearestSpawn);
+                    creep.moveTo(nearestSpawn, {reusePath: 50});
+                    return;
+                }
+            }
+            //if theres an extension that isn't full, deposit energy into it
+            var nearestExtension = creep.pos.findClosestByRange(FIND_MY_STRUCTURES, {
+                filter: (structure) => {
+                    return (structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN) && structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
+                }
+            });
+
+            if(nearestExtension != undefined) {
+                var transRes = creep.transfer(nearestExtension, RESOURCE_ENERGY);
+                new RoomVisual(creep.pos.roomName).line(creep.pos, nearestExtension.pos, {color: 'green'});
+                if (transRes == ERR_NOT_IN_RANGE) {
+                    creep.moveTo(nearestExtension, {reusePath: 50});
+                    return;
                 }
             }
 
@@ -140,7 +160,8 @@ module.exports = {
                 new RoomVisual(creep.pos.roomName).line(creep.pos, nearestContainer.pos, {color: 'green'});
                 var transRes = creep.transfer(nearestContainer, RESOURCE_ENERGY);
                 if (transRes == ERR_NOT_IN_RANGE) {
-                    creep.moveTo(nearestContainer);
+                    creep.moveTo(nearestContainer, {reusePath: 50});
+                    return;
                 }
             }
 
@@ -156,7 +177,8 @@ module.exports = {
                 var loiterPos = new RoomPosition(x, y, spawnPos.roomName);
 
                 new RoomVisual(creep.room.name).circle(loiterPos, {color: 'red', radius: 1});
-                creep.moveTo(loiterPos);
+                creep.moveTo(loiterPos, {reusePath: 50});
+                return; 
 
             }
 

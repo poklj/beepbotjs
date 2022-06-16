@@ -2,9 +2,11 @@
 
 var handshakeActions = require("./handshakeActions");
 module.exports = {
-    body: [MOVE, MOVE, ATTACK, ATTACK],
+    bodySmall: [MOVE, TOUGH, ATTACK],
+    body: [MOVE, MOVE, MOVE ,TOUGH, RANGED_ATTACK ,ATTACK, ATTACK],
     role: 'defenderBasic',
     priorty: 8, // TODO: make this a floating priority based on an contextual threat mode, so that if we need defenders we can boost them up or leave them if we don't need them.
+    ticksToLive: -1, // amount of ticks to start attempting to renew
     /**
      * 
      * @param {Creep} creep 
@@ -12,7 +14,7 @@ module.exports = {
     run(creep) {
 
         //Creep keepalive
-        if (creep.ticksToLive < 100) {
+        if (creep.ticksToLive < -1) { //Disable keepalive on builders for now
             creep.say("I'm dying");
             var nearestSpawn = creep.pos.findClosestByRange(FIND_MY_SPAWNS);
             creep.moveTo(nearestSpawn);
@@ -30,6 +32,15 @@ module.exports = {
                 return hostile.room.name == creep.room.name;
             }
         });
+        //if there's a flag named move, move to it
+        if(Game.flags["move"] != undefined) {
+            creep.moveTo(Game.flags["move"]);
+        }
+        //if there's an flag named attack move to it and attack
+        if(Game.flags["attack"] != undefined) {
+            creep.moveTo(Game.flags["attack"]);
+            creep.attack(Game.flags["attack"]);
+        }
 
         if(nearestHostile) {
             creep.moveTo(nearestHostile);
@@ -45,22 +56,28 @@ module.exports = {
             }
 
         }
+        //If there's a flag marked as attack, move to the room and attack the flag
+
+
         //If we don't have a hostile creep, loiter nearby exits
-        else {
+        if(!nearestHostile && !Game.flags["attack"] && !Game.flags["move"]) {
 
             //nearests spawns
             var nearestSpawn = creep.pos.findClosestByRange(FIND_MY_SPAWNS);
             var spawnPos = nearestSpawn.pos;
 
-            var distanceFromSpawn = 6; // Distance to loiter from the spawn
-            var angle = 90; // Angle to loiter around the spawn
+            var distanceFromSpawn = 8; // Distance to loiter from the spawn
+            var angle = 4; // Angle to loiter around the spawn
 
             var x = spawnPos.x + Math.round(distanceFromSpawn * Math.cos(angle));
             var y = spawnPos.y + Math.round(distanceFromSpawn * Math.sin(angle));
             var loiterPos = new RoomPosition(x, y, spawnPos.roomName);
 
             new RoomVisual(creep.room.name).circle(loiterPos, {fill: 'red', radius: 1});
+
+            
             creep.moveTo(loiterPos);
+            return;
         }
 
     

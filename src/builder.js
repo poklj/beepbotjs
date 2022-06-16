@@ -12,17 +12,30 @@ module.exports = {
      * 
      * @param {Creep} creep Creep to run
      */
-    maxEnergyDraw: 25,
+    ticksToLive: -1, // amount of ticks to start attempting to renew
+    maxEnergyDraw: 30,
     run(creep){
+
         //if the room controller is about to downgrade, pull 5 energy and upgrade it
-        if(creep.room.controller.ticksToDowngrade < 100) {
+        if(creep.room.controller.ticksToDowngrade < 1000) {
             if(creep.carry.energy < 5) {
+                var container = creep.pos.findClosestByRange(FIND_STRUCTURES, {
+                    filter: (structure) => {
+                        return (structure.structureType == STRUCTURE_CONTAINER) &&
+                            (structure.store[RESOURCE_ENERGY] > 0);
+                    }
+                });
+                if(container != undefined) {
+                    creep.moveTo(container);
+                    creep.withdraw(container, RESOURCE_ENERGY);
+                }
+                 else {
                 //grab 5 energy from spawn
                 var nearestSpawn = creep.pos.findClosestByRange(FIND_MY_SPAWNS);
                 creep.moveTo(nearestSpawn);
                 creep.withdraw(nearestSpawn, RESOURCE_ENERGY, 5);
-            }
-            else {
+                }
+            } else { 
                 //upgrade the controller
                 creep.moveTo(creep.room.controller);
                 creep.upgradeController(creep.room.controller);
@@ -33,7 +46,7 @@ module.exports = {
 
 
         //Creep keepalive, if it's about to die, renew it with the nearest spawn. Do this before anything else.
-        if (creep.ticksToLive < 100) {
+        if (creep.ticksToLive < this.ticksToLive) {
             creep.say("I'm dying");
             new RoomVisual(creep.room.name).line(creep.pos, creep.pos.findClosestByRange(FIND_MY_SPAWNS).pos, {color: 'black'});
             var nearestSpawn;
@@ -62,27 +75,6 @@ module.exports = {
         if(creep.store.energy == 0) {
             creep.memory.mode = "empty";
             //Empty container loitering
-            var container = creep.pos.findClosestByRange(FIND_STRUCTURES, {
-                filter: (structure) => {
-                    return (structure.structureType == STRUCTURE_CONTAINER) &&
-                        (structure.store.energy > 0);
-                }
-            });
-            if(!container) {
-                var nearestSpawn = creep.pos.findClosestByRange(FIND_MY_SPAWNS);
-                var spawnPos = nearestSpawn.pos;
-
-                var distanceFromSpawn = 5; // Distance to loiter from the spawn
-                var angle = 70; // Angle to loiter around the spawn
-
-                var x = spawnPos.x + Math.round(distanceFromSpawn * Math.cos(angle));
-                var y = spawnPos.y + Math.round(distanceFromSpawn * Math.sin(angle));
-                var loiterPos = new RoomPosition(x, y, spawnPos.roomName);
-
-                new RoomVisual(creep.room.name).circle(loiterPos, {color: '', radius: 1});
-                creep.moveTo(loiterPos);
-
-            }
         }
 
         if(creep.store.energy > 0) {
@@ -90,15 +82,28 @@ module.exports = {
 
         }
         if(creep.memory.mode == "empty") {
-            var nearestContainer = creep.pos.findClosestByRange(FIND_STRUCTURES, {
+            
+            //find all containers with energy in them
+            var containers = creep.room.find(FIND_STRUCTURES, {
                 filter: (structure) => {
-                    return (structure.structureType == STRUCTURE_CONTAINER || structure.structureType == STRUCTURE_STORAGE) && structure.store.energy > 0;
+                    return (structure.structureType == STRUCTURE_CONTAINER) &&
+                    (structure.store[RESOURCE_ENERGY] > 0);
                 }
             });
-            if(nearestContainer) {
+            if(containers.length > 0) {
+                //withdraw energy from the container with the most energy
+                var container = containers[0];
+                for(var i = 0; i < containers.length; i++) {
+                    if(containers[i].store[RESOURCE_ENERGY] > container.store[RESOURCE_ENERGY]) {
+                        container = containers[i];
+                    }
+                }
+            }
+            if(container) {
                 creep.say("-- container");
-                creep.moveTo(nearestContainer);
-                creep.withdraw(nearestContainer, RESOURCE_ENERGY, this.maxEnergyDraw);
+                creep.moveTo(container);
+                new RoomVisual(creep.room.name).line(creep.pos, container.pos, {color: 'white'});
+                creep.withdraw(container, RESOURCE_ENERGY, this.maxEnergyDraw);
             } else {
                 var nearestSpawn = creep.pos.findClosestByRange(FIND_MY_SPAWNS);
                 if(nearestSpawn.memory.mode == "normal") {
@@ -106,31 +111,33 @@ module.exports = {
                     creep.moveTo(nearestSpawn);
                     creep.withdraw(nearestSpawn, RESOURCE_ENERGY, 35);
                 } else {
+
                     if(nearestSpawn.store.getFreeCapacity(RESOURCE_ENERGY) == 0) {
                         creep.moveTo(nearestSpawn);
                         creep.withdraw(nearestSpawn, RESOURCE_ENERGY, 15); //Sip a little from a maxed spawn.
+                    } else {
+
+
+                        //loiter around the spawn inside a circle nearby until it's able to pull energy
+                        var spawnPos = nearestSpawn.pos;
+
+                        var distanceFromSpawn = 4; // Distance to loiter from the spawn
+                        var angle = 5; // Angle to loiter around the spawn
+
+                        var x = spawnPos.x + Math.round(distanceFromSpawn * Math.cos(angle));
+                        var y = spawnPos.y + Math.round(distanceFromSpawn * Math.sin(angle));
+                        var loiterPos = new RoomPosition(x, y, spawnPos.roomName);
+
+                        new RoomVisual(creep.room.name).circle(loiterPos, {color: 'red', radius: 1});
+                        creep.moveTo(loiterPos);
                     }
-
-                    //loiter around the spawn inside a circle nearby until it's able to pull energy
-                    var spawnPos = nearestSpawn.pos;
-
-                    var distanceFromSpawn = 4; // Distance to loiter from the spawn
-                    var angle = 5; // Angle to loiter around the spawn
-
-                    var x = spawnPos.x + Math.round(distanceFromSpawn * Math.cos(angle));
-                    var y = spawnPos.y + Math.round(distanceFromSpawn * Math.sin(angle));
-                    var loiterPos = new RoomPosition(x, y, spawnPos.roomName);
-
-                    new RoomVisual(creep.room.name).circle(loiterPos, {color: 'red', radius: 1});
-                    creep.moveTo(loiterPos);
-
             
                 }
             }
         } 
         if(creep.memory.mode == "normal") {
-
-            //construction sites in room with highest progress
+            
+            //construction sites in room with highest progress, preferably ramparts
             var highestProgress = 0;
             var highestProgressSite = null;
             for(var site in creep.room.find(FIND_CONSTRUCTION_SITES)) {
@@ -139,17 +146,19 @@ module.exports = {
                     highestProgressSite = creep.room.find(FIND_CONSTRUCTION_SITES)[site];
                 }
             }
+            //if any construction sites are ramparts, do those first
+            for(var site in creep.room.find(FIND_CONSTRUCTION_SITES)) {
+                if(creep.room.find(FIND_CONSTRUCTION_SITES)[site].structureType == STRUCTURE_RAMPART) {
+                    highestProgressSite = creep.room.find(FIND_CONSTRUCTION_SITES)[site];
+                }
+            }
+
             // nearest construction site
-            
             var nearestStructure = creep.pos.findClosestByRange(FIND_MY_CONSTRUCTION_SITES)
             if(highestProgressSite) {
                 nearestStructure = highestProgressSite;
             }
 
-            
-
-                
-;
             if(nearestStructure) {
                 creep.say("Building");
                 new RoomVisual(creep.pos.roomName).line(creep.pos, nearestStructure.pos, {color: 'blue'});

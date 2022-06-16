@@ -2,20 +2,11 @@
 const memoryPrint = require("./memoryPrint");
 
 module.exports = {
-    /**
-     * get all the rooms adjacent to the given room
-     * @param {Room} room
-     * @returns {Room[]} rooms adjacent to the given room
-     * 
-     * @memberOf RoomEngine
-     */
-    getAdjacentRooms(room) {
-        var adjacentRooms = [];
-        for(var exit in Game.map.describeExits(room.name)) {
-            adjacentRooms.push(Game.rooms[exit]); //Add the adjacent room to the array
-        }
-        return adjacentRooms;
-    },
+
+    /* 
+     * get all rooms adjacent to the given room
+        * @param {Room} room
+        * @returns {Room[]}
 
     /**
      * Calculate Room Viability, for now, just give us the total score of all tiles within the room divided by the total tiles in the room . This is a simple heuristic using some arbitrary scoring criteria.

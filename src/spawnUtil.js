@@ -24,7 +24,6 @@ module.exports = {
             spawn.memory.queue = [];
         }
 
-        console.log("SpawnBehavior" + Game.time + ": " + spawn.name);
         //Bootstrap flag
         //room the spawn is in
         let room = spawn.room;
@@ -56,8 +55,6 @@ module.exports = {
 
         new RoomVisual(spawn.pos.roomName).text("Queue: " + numOfQueued, new RoomPosition(spawn.pos.x , spawn.pos.y + 1, spawn.pos.roomName) , {color: 'white'});
 
-        console.log("Harvesters: " + numOfHarvestersInRoom + " Queued: " + numOfHarvestersQueued);
-        console.log("Builders: " + numOfBuildersInRoom + " Queued: " + numOfBuildersQueued);
         spawn.memory.mode = "normal";
         
             // if(numOfHarvestersInRoom + numOfHarvestersQueued <= 5 ) {
@@ -79,7 +76,7 @@ module.exports = {
                     console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has less than 2 builders, requesting more");
                     this.registerCreate(spawn, 'builder');
             }
-            if (spawn.room.controller.level == 2 && numOfBuildersInRoom + numOfBuildersQueued <= 1 ) {
+            if (spawn.room.controller.level == 2 && numOfBuildersInRoom + numOfBuildersQueued <= 2 ) {
                 console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has less than 1 builder, requesting more");
                 this.registerCreate(spawn, 'builder');
             }
@@ -105,10 +102,11 @@ module.exports = {
                 console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has room level of " + spawn.room.controller.level + ", requesting repairer");
                 this.registerCreate(spawn, 'repairer');
             }
-            if(spawn.room.controller.level >= 2 && numOfBasicDefendersInRoom + numOfBasicDefendersQueued < 4) {
+            if(spawn.room.controller.level >= 2 && numOfBasicDefendersInRoom + numOfBasicDefendersQueued < 8) {
                 console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has room level of " + spawn.room.controller.level + ", requesting basic defender");
                 this.registerCreate(spawn, 'defenderBasic');
             }
+            
            
         if(numOfQueued > 0) {
             console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has " + numOfQueued + " queued");
@@ -124,7 +122,6 @@ module.exports = {
         //Spawn behavior
 
         if(this.canCreateCreep(spawn)) {
-            console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " can create creep");
             //for every entry in the queue, get the roles priorty lower is better, undefined is always last.
             var queue = spawn.memory.queue;
             //sort by priorty
@@ -138,14 +135,11 @@ module.exports = {
 
     registerCreate(spawn, role) {
         //register new creep type to be created
-        console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " Registering new creep role to spawn" + JSON.stringify(role));
-        spawn.memory.queue.push(role);
-
+         spawn.memory.queue.push(role);
     },
 
     hasQueuedCreep(spawn) {
         //check if there is a creep in the queue for this spawn
-        console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " Checking if there is a creep in the queue, queue length: " + spawn.memory.queue.length);
         return spawn.memory.queue.length > 0 ;
     },
 
@@ -155,7 +149,6 @@ module.exports = {
      * @returns 
      */
     canCreateCreep(spawn){
-        console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " Checking if spawn can create creep");
         return spawn.spawning == null;
     },
 
@@ -174,10 +167,9 @@ module.exports = {
      */
     spawnNextInQueue(spawn) {
         //spawn the next creep in the queue
-        console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " attempting to spawn next creep in queue");
+
         if(this.hasQueuedCreep(spawn) && this.canCreateCreep(spawn) ) {
             var qRole = spawn.memory.queue[0];
-            console.log("SpawnBehavior" + Game.time + ": " + spawn.name + "attempting Spawning creep with role: " + JSON.stringify(qRole) + "with body: " + JSON.stringify(creepUtil.bodyFromRole(qRole)));
             var result = spawn.spawnCreep(creepUtil.bodyFromRole(qRole), 
                 "Creep" + Game.time + "_" + qRole,{
                     memory: {
@@ -185,16 +177,13 @@ module.exports = {
                         spawnID: spawn.id, //remember the spawn id that created this creep
                     }
                 }); 
-                console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " Spawning result: " +   result.toString());
             if(result == OK) {
-                console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " Successfully spawned creep");
                 spawn.memory.queue.shift();
             }
             else if (result == ERR_INVALID_ARGS) {
                 console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " Invalid arguments");
             }
             else if(result == ERR_NOT_ENOUGH_ENERGY) {
-                console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " Not enough energy");
             }
             else if(result == ERR_BUSY) {
                 console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " Busy");

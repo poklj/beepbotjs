@@ -19,6 +19,10 @@ module.exports = {
         if(room.memory.sourcesActiveBots == undefined) {
             room.memory.sourcesActiveBots = {}; //List of creeps that are currently mining a source in this room by source id
         }
+
+    },
+
+    runEngine(room) {
         if(room.controller.my) {
             var sources = room.find(FIND_SOURCES);
             //for every source in the room, scan the surrounding spaces for empty space a creep can mine
@@ -32,21 +36,6 @@ module.exports = {
                 
             }
             console.log("Initialized sources space in room " + room.name);
-                
-
-
-            //adjacent room sources:
-            // if(room.memory.adjacentSources == undefined) {
-            //     var adjacentRooms = roomEngine.getAdjacentRooms(room);
-            //     for(var i = 0; i < adjacentRooms.length; i++) {
-            //         var adjacentRoom =  Game.rooms[adjacentRooms[i]];
-            //         //for all adjacent rooms, get their source ID's and add them to the room memory
-            //         var adjacentSources = adjacentRoom.find(FIND_SOURCES);
-            //         for(var j = 0; j < adjacentSources.length; j++) {
-            //             room.memory.adjacentSources.push()
-            //         }
-            //     }
-            // }
         }
         if(room.memory.sourcesActiveBots != undefined) {
             //scan creeps for sources that are currently being mined, and update the room memory accordingly, this is a hack to protect from dead harvesters
@@ -57,8 +46,6 @@ module.exports = {
             }
         }
     },
-
-    
 
     /**
      * give a source that has open space to a creep

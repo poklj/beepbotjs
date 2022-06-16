@@ -7,7 +7,29 @@ const defenderBasic = require("./defenderBasic");
 const hauler = require("./hauler");
 
 module.exports = {
-    bodyFromRole(role){
+    /**
+     * Check tile delta, and return the time we've been standing still, store the last tile and stop time in creep memory
+     * @param {Creep} creep
+     * @returns {number}
+     */
+
+    tileDelta(creep) {
+        if(creep.memory.stopTime == undefined) {
+            creep.memory.stopTime = 0;
+        }
+        if(creep.memory.lastTile == undefined) {
+            creep.memory.lastTile = creep.pos.y + "," + creep.pos.x + "," + creep.pos.roomName;
+        }
+        if(creep.memory.lastTile == creep.pos.y + "," + creep.pos.x + "," + creep.pos.roomName) {
+            creep.memory.stopTime++;
+        } else {
+            creep.memory.stopTime = 0;
+        }
+        return creep.memory.stopTime;
+
+    },
+
+    bodyFromRole(role, spawn){
         if (role == "harvester") {
             return harvester.body;
         } else if(role == "builder") {
@@ -17,9 +39,17 @@ module.exports = {
         } else if(role == "repairer") {
             return repairer.body;
         } else if(role == "defenderBasic") {
+            if(spawn) {
+                //if spawn has extensions use the larger version of the body
+                if(spawn.room.find(FIND_STRUCTURES, {filter: (structure) => {return structure.structureType == STRUCTURE_EXTENSION}}).length > 0) {
+                    return defenderBasic.body;
+                }
+            }
             return defenderBasic.body;
         } else if(role == "hauler") {
             return hauler.body;
+        } else if(role == "healer") {
+            return healer.body;
         }
     },
 
@@ -51,6 +81,9 @@ module.exports = {
         if(creepRole == "hauler") {
             hauler.run(creep);
         }
+        if(creepRole == "healer") {
+            healer.run(creep);
+        }
 
     },
     /**
@@ -78,6 +111,8 @@ module.exports = {
         }
         if(role == "hauler") {
             priority = harvester.priority;
+        } else if(role == "healer") {
+            priority = healer.priority;
         }
 
         return priority;

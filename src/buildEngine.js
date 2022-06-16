@@ -36,7 +36,10 @@ module.exports = {
         }
         if(room.controller.level == 1) {
             //TODO: Create a more complex base building plan, however for now, lets just build a simple base
-            var mainSpawn = Game.getObjectById(room.memory.mainSpawn);
+            //Get the spawn in the room with MainSpawn memory
+            var mainSpawn = room.find(FIND_MY_SPAWNS, {filter: (spawn) => {return spawn.memory.mainSpawn == true;}})[0];
+            
+            console.log("Main spawn: " + mainSpawn.name);
             var spawnPos = mainSpawn.pos; // RoomPosition
             //Build Containers
             if(room.memory.numContainers == undefined) {
@@ -79,13 +82,7 @@ module.exports = {
                         room.createConstructionSite(spawnPos.x + x, spawnPos.y + y, STRUCTURE_RAMPART);
                     }
                 }
-                var sources = room.find(FIND_SOURCES);
-                sources.forEach((source) => {
-                    var path = room.findPath(spawnPos, source.pos, {ignoreCreeps: true});
-                    path.forEach((step) => {
-                        room.createConstructionSite(step.x, step.y, STRUCTURE_ROAD);
-                    });
-                });
+
                 //build extensions
 
                 room.memory.l2placed = true;
@@ -97,7 +94,7 @@ module.exports = {
                 containerMatrix.forEach((offset) => {
                         room.createConstructionSite(spawnPos.x + offset[0], spawnPos.y + offset[1], STRUCTURE_CONTAINER);
                 });
-                var extensionMatrix = [[0, -1], [0, 1], [-1, 0], [1, 0]]; // x and y offsets for extension placement from spawn
+                var extensionMatrix = [[0, -2], [0, 2], [-2, 0], [2, 0]]; // x and y offsets for extension placement from spawn
                 extensionMatrix.forEach((offset) => {
                         room.createConstructionSite(spawnPos.x + offset[0], spawnPos.y + offset[1], STRUCTURE_EXTENSION);
                 });
@@ -113,7 +110,30 @@ module.exports = {
                         return structure.structureType == STRUCTURE_WALL && structure.pos.getRangeTo(spawnPos) <= 2;
                     }
                 });
-            
+                //build a road to any minerals in the room
+                var minerals = room.find(FIND_MINERALS);
+                minerals.forEach((mineral) => {
+                    var path = room.findPath(spawnPos, mineral.pos, {ignoreCreeps: true});
+                    path.forEach((step) => {
+                        room.createConstructionSite(step.x, step.y, STRUCTURE_ROAD);
+                    });
+                });
+                var sources = room.find(FIND_SOURCES);
+                sources.forEach((source) => {
+                    var path = room.findPath(spawnPos, source.pos, {ignoreCreeps: true});
+                    path.forEach((step) => {
+                        room.createConstructionSite(step.x, step.y, STRUCTURE_ROAD);
+                    });
+                });
+
+                //build a road from the mainspawn to the room controller
+                var path = room.findPath(spawnPos, room.controller.pos, {ignoreCreeps: true});
+                path.forEach((step) => {
+                    //if the step does not have a structure on it, build a road
+                    if(!room.lookForAt(LOOK_STRUCTURES, step.x, step.y).length) {
+                        room.createConstructionSite(step.x, step.y, STRUCTURE_ROAD);
+                    }
+                });            
         }
 
         }

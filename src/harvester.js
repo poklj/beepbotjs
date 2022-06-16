@@ -2,10 +2,11 @@
 
 
 const handshakeActions = require('handshakeActions');
+const creepFunctions = require('./creepFunctions');
 const miningEngine = require('./miningEngine');
 
 module.exports = {
-    body: [WORK, CARRY, MOVE],
+    body: [WORK, WORK, CARRY, MOVE],
     role: 'harvester',
     priority: 1, //Higher priority means it will be sorted to the top of a spawn queue
     /**
@@ -15,7 +16,8 @@ module.exports = {
     run(creep){
         //Creep behavior
         //TODO: replace this a mining manager.... memory!
-        
+        var haulerCount = creep.room.find(FIND_MY_CREEPS, {filter: (c) => c.memory.role == "hauler"}).length;
+        var saviorSpawn = Game.getObjectById(creep.memory.saviorSpawn);
         //Creep Keepalive
         if (creep.ticksToLive < 100) {
             creep.say("I'm dying");
@@ -25,7 +27,7 @@ module.exports = {
                var nearestSpawn = creep.pos.findClosestByRange(FIND_MY_SPAWNS);
                creep.memory.saviorSpawn = nearestSpawn.id;
             }
-            var saviorSpawn = Game.getObjectById(creep.memory.saviorSpawn);
+
             creep.moveTo(saviorSpawn);
             //Dump energy into the spawn to prevent death from timeout
             if(creep.store.energy > 0) {
@@ -47,12 +49,27 @@ module.exports = {
         if(creep.memory.sourceToMine == "DEPOSITING" && creep.store.energy == 0) {
             creep.memory.sourceToMine = "";
         }
+        //hard reset the sourceToMine if we've been stood around doing nothing for too long
+        // if(creepUtil.tileDelta(creep) > 25) {
+        //     creep.memory.sourceToMine = "";
+        // }
+    
+        
         if(creep.store.energy < creep.store.getCapacity()) {
             //harvest energy from source in memory
             if(creep.memory.sourceToMine == "") {
                 creep.memory.sourceToMine = miningEngine.giveSafeSourceToCreep(creep.room, creep);
             }
+
+
             var sourceToMine = Game.getObjectById(creep.memory.sourceToMine);
+            //If we're not near to the source we were told to mine, track tile delta, and relinquish the source to ask for a new one if we've been standing around for too long
+            if(!creep.pos.isNearTo(Game.getObjectById(creep.memory.sourceToMine))){
+                if(creepFunctions.tileDelta(creep) > 25) {
+                    creep.memory.sourceToMine = "";
+                }
+            }
+
             var harvestAttempt = creep.harvest(sourceToMine);
 
             if(harvestAttempt == ERR_NOT_IN_RANGE) {
@@ -62,6 +79,7 @@ module.exports = {
             }
             else if (harvestAttempt == OK) {
                 new RoomVisual(creep.pos.roomName).line(creep.pos, sourceToMine.pos, {color: 'red', lineStyle: 'dashed'});
+                return;
             }
         }
         //if there's a hauler in an adjacent square, deposit energy
@@ -69,13 +87,14 @@ module.exports = {
             var adjacentHaulers = creep.pos.findInRange(FIND_MY_CREEPS, 1, {filter: (c) => c.memory.role == "hauler"});
             if(adjacentHaulers.length > 0) {
                 creep.transfer(adjacentHaulers[0], RESOURCE_ENERGY);
+                return;
             }
         }
 
         //if there are no haulers in the room or in adjacent rooms, deposit energy if we're full
         if(creep.store.energy == creep.store.getCapacity()) {
 
-            var haulerCount = creep.room.find(FIND_MY_CREEPS, {filter: (c) => c.memory.role == "hauler"}).length;
+
             if(haulerCount == 0) {
 
                 /**
@@ -96,6 +115,7 @@ module.exports = {
                     new RoomVisual(creep.pos.roomName).line(creep.pos, nearestSpawn.pos, {color: 'green'});
                     if (transRes == ERR_NOT_IN_RANGE) {
                         creep.moveTo(nearestSpawn);
+                        return;
                     }
                 }
 
@@ -104,6 +124,7 @@ module.exports = {
                     var transRes = creep.transfer(nearestContainer, RESOURCE_ENERGY);
                     if (transRes == ERR_NOT_IN_RANGE) {
                         creep.moveTo(nearestContainer);
+                        return;
                     }
                 }
 
@@ -120,7 +141,7 @@ module.exports = {
 
                     new RoomVisual(creep.room.name).circle(loiterPos, {color: 'red', radius: 1});
                     creep.moveTo(loiterPos);
-
+                    return;
                 }
             } 
 
