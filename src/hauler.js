@@ -32,15 +32,21 @@ module.exports = {
      */
     run(creep) {
         if (creep.ticksToLive < 100) {
-            creep.say("I'm dying");
-            new RoomVisual(creep.room.name).line(creep.pos, creep.pos.findClosestByRange(FIND_MY_SPAWNS).pos, {color: 'black'});
-            var nearestSpawn;
             if(creep.memory.nearestSpawn == undefined) {
-               var nearestSpawn = creep.pos.findClosestByRange(FIND_MY_SPAWNS);
-               creep.memory.saviorSpawn = nearestSpawn.id;
+                var nearestSpawn = creep.pos.findClosestByRange(FIND_MY_SPAWNS);
+                if(nearestSpawn != undefined) {
+                     creep.memory.saviorSpawn = nearestSpawn.id;
+                } else {
+                     creep.memory.saviorSpawn = creep.memory.spawnID;
+                }
+             }
+
+            creep.say("I'm dying");
+            if(nearestSpawn != undefined) {
+                new RoomVisual(creep.room.name).line(creep.pos, nearestSpawn.pos, {color: 'black'});
             }
             var saviorSpawn = Game.getObjectById(creep.memory.saviorSpawn);
-            creep.moveTo(saviorSpawn);
+            creep.moveTo(saviorSpawn, {reusePath: 50});
             //Dump energy into the spawn to prevent death from timeout
             if(creep.store.energy > 0) {
                 creep.transfer(nearestSpawn, RESOURCE_ENERGY);
@@ -57,6 +63,8 @@ module.exports = {
 
         // If we aren't full yet go find some energy
         if (creep.store.getFreeCapacity() > 0) {
+            //if there's a flag emergency, go to it and withdraw energy
+
             //nearest tombstone with energy in it
             var nearestTombstone = creep.pos.findClosestByRange(FIND_TOMBSTONES, {
                 filter: (tombstone) => {
@@ -77,15 +85,45 @@ module.exports = {
                 }
             }
 
+            //if there's a tombstone with energy in it and we're not adjacent to a harvester, go to it
+            
+            
+
+
             //Only look to loiter next to a harvester or find a tombstone if we're not already loitering around a harvester
             if(adjacentHarvester == false) {
+                //if theres a nearby ruin with energy, go to it and withdraw energy
+                var nearestRuin = creep.pos.findClosestByRange(FIND_RUINS, {
+                    filter: (ruin) => {
+                        return ruin.store.energy > 0;
+                    }
+                });
+                if(nearestRuin != undefined) {
+                    creep.moveTo(nearestRuin, {reusePath: 50});
+                    creep.withdraw(nearestRuin, RESOURCE_ENERGY);
+                }
                 //if there's a tombstone, harvest from it
                 if (nearestTombstone != undefined) {
                     new RoomVisual(creep.pos.roomName).line(creep.pos, nearestTombstone.pos, {color: 'blue'});
                     if (creep.withdraw(nearestTombstone, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
                         creep.moveTo(nearestTombstone);
+                        return;
                     }
                 }
+                //find any dropped resources in the room and collect them
+                var droppedResources = creep.room.find(FIND_DROPPED_RESOURCES, {
+                    filter: (resource) => {
+                        return resource.resourceType == RESOURCE_ENERGY;
+                    }
+                });
+                if (droppedResources.length > 0) {
+                    new RoomVisual(creep.pos.roomName).line(creep.pos, droppedResources[0].pos, {color: 'blue'});
+                    if (creep.pickup(droppedResources[0]) == ERR_NOT_IN_RANGE) {
+                        creep.moveTo(droppedResources[0]);
+                        return;
+                    }
+                }                
+
                 //if a harvester has haulers nearby, drop it from the list of harvesters that need haulers
                 // union harvesters without a hauler nearby with harvesters that are next to a source
                 for (var i = 0; i < harvesters.length; i++) {
@@ -112,7 +150,7 @@ module.exports = {
                 // movce to the harvester without a hauler next to it
                 if(closestHarvester != undefined) {
                     new RoomVisual(creep.pos.roomName).line(creep.pos, closestHarvester.pos, {color: 'cyan'});
-                    creep.moveTo(closestHarvester, {reusePath: 50});
+                    creep.moveTo(closestHarvester, {reusePath: 15});
                 } else {
                     // move to any harvester without a hauler
                     creep.moveTo(harvesters[0]);
@@ -124,11 +162,13 @@ module.exports = {
                             return creep.memory.role == 'harvester';
                         }
                     });
-
-
+                    //move to the closest harvester
+                    if(closestHarvester != undefined) {
+                        new RoomVisual(creep.pos.roomName).line(creep.pos, closestHarvester.pos, {color: 'cyan'});
+                        creep.moveTo(closestHarvester, {reusePath: 15});
+                    }
                 }
             }
-
 
         } else {
 
@@ -166,23 +206,53 @@ module.exports = {
                 }
             });
 
+            //If there's a turret in the room that isn't at least half full, deposit energy into it
+            var nearestTurret = creep.pos.findClosestByRange(FIND_MY_STRUCTURES, {
+                filter: (structure) => {
+                    return (structure.structureType == STRUCTURE_TOWER) && structure.store.energy < structure.store.getCapacity(RESOURCE_ENERGY) / 2;
+                }  
+            });
+            if(nearestTurret != undefined) {
+                var transRes = creep.transfer(nearestTurret, RESOURCE_ENERGY);
+                new RoomVisual(creep.pos.roomName).line(creep.pos, nearestTurret.pos, {color: 'green'});
+                if (transRes == ERR_NOT_IN_RANGE) {
+                    creep.moveTo(nearestTurret);
+                    return;
+                }
+            }
             if(nearestExtension != undefined) {
                 var transRes = creep.transfer(nearestExtension, RESOURCE_ENERGY);
                 new RoomVisual(creep.pos.roomName).line(creep.pos, nearestExtension.pos, {color: 'green'});
                 if (transRes == ERR_NOT_IN_RANGE) {
-                    creep.moveTo(nearestExtension, {reusePath: 50});
+                    creep.moveTo(nearestExtension);
                     return;
                 }
             }
+            var turrets = creep.pos.findClosestByRange(FIND_MY_STRUCTURES, {
+                filter: (structure) => {
+                    return (structure.structureType == STRUCTURE_TOWER) && structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
+                }  
+            });
 
-            else if(nearestContainer != undefined) {
+            //fill up the rest of a turret
+            if(turrets != undefined) {
+                var transRes = creep.transfer(nearestTurret, RESOURCE_ENERGY);
+                new RoomVisual(creep.pos.roomName).line(creep.pos, nearestTurret.pos, {color: 'green'});
+                if (transRes == ERR_NOT_IN_RANGE) {
+                    creep.moveTo(nearestTurret);
+                    return;
+                }
+            }
+            if(nearestContainer != undefined) {
                 new RoomVisual(creep.pos.roomName).line(creep.pos, nearestContainer.pos, {color: 'green'});
                 var transRes = creep.transfer(nearestContainer, RESOURCE_ENERGY);
                 if (transRes == ERR_NOT_IN_RANGE) {
-                    creep.moveTo(nearestContainer, {reusePath: 50});
+                    creep.moveTo(nearestContainer);
                     return;
                 }
             }
+            //if there's a flag named 'emergency' withdraw energy the container under it
+
 
             //loiter near a spawn if we can't deposit energy anywhere
             else {

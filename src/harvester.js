@@ -6,7 +6,7 @@ const creepFunctions = require('./creepFunctions');
 const miningEngine = require('./miningEngine');
 
 module.exports = {
-    body: [WORK, WORK, CARRY, MOVE],
+    body: [WORK, CARRY, MOVE],
     role: 'harvester',
     priority: 1, //Higher priority means it will be sorted to the top of a spawn queue
     /**
@@ -19,7 +19,7 @@ module.exports = {
         var haulerCount = creep.room.find(FIND_MY_CREEPS, {filter: (c) => c.memory.role == "hauler"}).length;
         var saviorSpawn = Game.getObjectById(creep.memory.saviorSpawn);
         //Creep Keepalive
-        if (creep.ticksToLive < 100) {
+        if (creep.ticksToLive < -1) {
             creep.say("I'm dying");
             new RoomVisual(creep.room.name).line(creep.pos, creep.pos.findClosestByRange(FIND_MY_SPAWNS).pos, {color: 'black'});
             var nearestSpawn;
@@ -53,9 +53,16 @@ module.exports = {
         // if(creepUtil.tileDelta(creep) > 25) {
         //     creep.memory.sourceToMine = "";
         // }
+
     
         
         if(creep.store.energy < creep.store.getCapacity()) {
+            
+            var droppedEnergy = creep.pos.findInRange(FIND_DROPPED_RESOURCES, 1);
+            if(droppedEnergy.length > 0) {
+                creep.pickup(droppedEnergy[0]);
+                return;
+            }
             //harvest energy from source in memory
             if(creep.memory.sourceToMine == "") {
                 creep.memory.sourceToMine = miningEngine.giveSafeSourceToCreep(creep.room, creep);
@@ -94,9 +101,7 @@ module.exports = {
         //if there are no haulers in the room or in adjacent rooms, deposit energy if we're full
         if(creep.store.energy == creep.store.getCapacity()) {
 
-
             if(haulerCount == 0) {
-
                 /**
                  * if a nearby spawn's store isn't full of energy, deposit energy into it 
                  * if all spawns are full of energy, deposit energy into the storage
@@ -127,28 +132,11 @@ module.exports = {
                         return;
                     }
                 }
+                //If we're next to dropped energy, pick it up
 
-                //loiter near a spawn if we can't deposit energy anywhere
-                else {
-                    var spawnPos = nearestSpawn.pos;
-
-                    var distanceFromSpawn = 5; // Distance to loiter from the spawn
-                    var angle = 50; // Angle to loiter around the spawn
-
-                    var x = spawnPos.x + Math.round(distanceFromSpawn * Math.cos(angle));
-                    var y = spawnPos.y + Math.round(distanceFromSpawn * Math.sin(angle));
-                    var loiterPos = new RoomPosition(x, y, spawnPos.roomName);
-
-                    new RoomVisual(creep.room.name).circle(loiterPos, {color: 'red', radius: 1});
-                    creep.moveTo(loiterPos);
-                    return;
-                }
-            } 
+            }
 
 
-        
-
-        }
+        } 
     }
-
-}
+};

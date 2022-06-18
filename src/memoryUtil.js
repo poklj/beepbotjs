@@ -5,5 +5,12 @@ module.exports = {
      */
     wipeAllMemory() {
         Memory = {};
+    },
+    removeDeadCreepMem(){
+        for(var name in Memory.creeps) {
+            if(!Game.creeps[name]) {
+                Memory.creeps[name] = undefined;
+            }
+        }
     }
 };

@@ -3,7 +3,7 @@
 var handshakeActions = require("./handshakeActions");
 module.exports = {
     bodySmall: [MOVE, TOUGH, ATTACK],
-    body: [MOVE, MOVE, MOVE ,TOUGH, RANGED_ATTACK ,ATTACK, ATTACK],
+    body: [MOVE, MOVE ,TOUGH, RANGED_ATTACK],
     role: 'defenderBasic',
     priorty: 8, // TODO: make this a floating priority based on an contextual threat mode, so that if we need defenders we can boost them up or leave them if we don't need them.
     ticksToLive: -1, // amount of ticks to start attempting to renew
@@ -64,6 +64,13 @@ module.exports = {
 
             //nearests spawns
             var nearestSpawn = creep.pos.findClosestByRange(FIND_MY_SPAWNS);
+            if(nearestSpawn == undefined) {
+                //use spawnID in memory if we have one
+                if(creep.memory.spawnID != undefined) {
+                    nearestSpawn = Game.getObjectById(creep.memory.spawnID);
+                }
+
+            }
             var spawnPos = nearestSpawn.pos;
 
             var distanceFromSpawn = 8; // Distance to loiter from the spawn

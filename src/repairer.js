@@ -75,7 +75,8 @@ module.exports = {
                 }
             });
 
-        } 
+        }
+
         if(creep.store.energy > 0) {
             creep.memory.mode = "normal";
         }
@@ -99,22 +100,12 @@ module.exports = {
                 }
             }
 
-            if( container) {
+            if(container) {
                 creep.say("-- container");
                 creep.moveTo(container);
                 new RoomVisual(creep.room.name).line(creep.pos, container.pos, {color: 'white'});
                 creep.withdraw(container, RESOURCE_ENERGY, this.maxEnergyDraw);
             //If we can't find a container, we'll try to find a spawn that is in mode "normal"
-            } else {
-                var nearestSpawn = creep.pos.findClosestByRange(FIND_MY_SPAWNS, {
-                    filter: (spawn) => {
-                        return spawn.memory.mode == "normal" || spawn.store.getFreeCapacity(RESOURCE_ENERGY) == 0;
-                    }
-                });
-                if(nearestSpawn) {
-                    creep.moveTo(nearestSpawn);
-                    creep.withdraw(nearestSpawn, RESOURCE_ENERGY, this.energyMaxWithdrawl);
-                }
             }
         }
 
@@ -123,7 +114,7 @@ module.exports = {
             //find all structures that need repair
             var structures = creep.room.find(FIND_STRUCTURES, {
                 filter: (structure) => {
-                    return (structure.structureType == STRUCTURE_WALL || structure.structureType == STRUCTURE_RAMPART || structure.structureType == STRUCTURE_ROAD) &&
+                    return (structure.structureType == STRUCTURE_WALL || structure.structureType == STRUCTURE_RAMPART || structure.structureType == STRUCTURE_CONTAINER) &&
                         structure.hits < structure.hitsMax;
                     }});
 

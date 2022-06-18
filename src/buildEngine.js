@@ -90,7 +90,7 @@ module.exports = {
             if(room.memory.l2placed == true) {
                 var mainSpawn = Game.getObjectById(room.memory.mainSpawn);
                 var spawnPos = mainSpawn.pos; // RoomPosition
-                var containerMatrix = [[-1, -1], [1, -1], [-1, 1], [1, 1]]; // x and y offsets for container placement from spawn
+                var containerMatrix = [[-1, -1], [1, -1], [1, 1]]; // x and y offsets for container placement from spawn
                 containerMatrix.forEach((offset) => {
                         room.createConstructionSite(spawnPos.x + offset[0], spawnPos.y + offset[1], STRUCTURE_CONTAINER);
                 });
@@ -115,26 +115,34 @@ module.exports = {
                 minerals.forEach((mineral) => {
                     var path = room.findPath(spawnPos, mineral.pos, {ignoreCreeps: true});
                     path.forEach((step) => {
-                        room.createConstructionSite(step.x, step.y, STRUCTURE_ROAD);
-                    });
+                        //look at the terrain at the step and build a road if it's swamp or plain
+                            var pos = new RoomPosition(step.x, step.y, room.name);
+                            var chk = pos.lookFor(LOOK_TERRAIN);
+                            if(chk == "swamp" || chk == "plain") {
+                                room.createConstructionSite(step.x, step.y, STRUCTURE_ROAD);
+                            }
+                        });
                 });
                 var sources = room.find(FIND_SOURCES);
                 sources.forEach((source) => {
                     var path = room.findPath(spawnPos, source.pos, {ignoreCreeps: true});
                     path.forEach((step) => {
-                        room.createConstructionSite(step.x, step.y, STRUCTURE_ROAD);
+                        var pos = new RoomPosition(step.x, step.y, room.name);
+                        var chk = pos.lookFor(LOOK_TERRAIN);
+                        if(chk == "swamp" || chk == "plain") {
+                            room.createConstructionSite(step.x, step.y, STRUCTURE_ROAD);
+                        }
                     });
                 });
 
                 //build a road from the mainspawn to the room controller
                 var path = room.findPath(spawnPos, room.controller.pos, {ignoreCreeps: true});
                 path.forEach((step) => {
-                    //if the step does not have a structure on it, build a road
-                    if(!room.lookForAt(LOOK_STRUCTURES, step.x, step.y).length) {
-                        //if the step does not have a source on it, build a road
-                        if(!room.lookForAt(LOOK_SOURCES, step.x, step.y).length) {
-                            room.createConstructionSite(step.x, step.y, STRUCTURE_ROAD);
-                        }
+                    //if the tile is not plains or swamp, don't build a road
+                    var pos = new RoomPosition(step.x, step.y, room.name);
+                    var chk = pos.lookFor(LOOK_TERRAIN);
+                    if(chk == "swamp" || chk == "plain") {
+                        room.createConstructionSite(step.x, step.y, STRUCTURE_ROAD);
                     }
                 });            
         }

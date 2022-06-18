@@ -7,7 +7,7 @@ const creep = require('./creepUtil');
 const buildEngine = require('./buildEngine');
 const miningEngine = require('./miningEngine');
 const roomEngine = require('./roomEngine');
-
+const memoryUtil = require('./memoryUtil');
 // Any modules that you use that modify the game's prototypes should be require'd
 // before you require the profiler.
 const profiler = require('screeps-profiler');
@@ -18,6 +18,11 @@ const profiler = require('screeps-profiler');
 console.log("Gameloop" + Game.time);
 //Debug mode memory flag to turn on/off debug mode to enable some more intensive debugging features of beepbot.
 var debugMode = true;
+
+//every 100 ticks we flush the creep memory.
+if(Game.time % 100 == 0) {
+    memoryUtil.removeDeadCreepMem();
+}
 
 
 // This line monkey patches the global prototypes.

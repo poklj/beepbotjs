@@ -1,6 +1,8 @@
 credentials.js
 localCredentials.js
+credentials-ptr.js
 
+*credentials*.js
 # https://github.com/github/gitignore/blob/main/Node.gitignore
 # Logs
 logs
