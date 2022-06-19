@@ -14,6 +14,7 @@ module.exports = {
      * @param {Creep} creep 
      */
     run(creep){
+
         //Creep behavior
         //TODO: replace this a mining manager.... memory!
         var haulerCount = creep.room.find(FIND_MY_CREEPS, {filter: (c) => c.memory.role == "hauler"}).length;

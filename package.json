@@ -1,7 +1,17 @@
 {
   "dependencies": {
-    "gulp": "^4.0.2",
+    "grunt-screeps": "^1.5.0",
+    "gulp": "^3.9.1",
+    "gulp-flatten": "^0.4.0",
     "gulp-screeps": "^1.1.0",
-    "jshint": "^2.13.4"
+    "jshint": "^2.13.4",
+    "recast": "^0.21.1",
+    "through2": "^4.0.2"
+  },
+  "devDependencies": {
+    "grunt-contrib-clean": "^2.0.1",
+    "grunt-contrib-copy": "^1.0.0",
+    "gulp-dot-flatten": "^1.1.0",
+    "gulp-flatten-requires": "^1.0.0"
   }
 }

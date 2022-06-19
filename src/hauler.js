@@ -31,6 +31,7 @@ module.exports = {
      * @returns 
      */
     run(creep) {
+        //creep.giveWay();
         if (creep.ticksToLive < 100) {
             if(creep.memory.nearestSpawn == undefined) {
                 var nearestSpawn = creep.pos.findClosestByRange(FIND_MY_SPAWNS);

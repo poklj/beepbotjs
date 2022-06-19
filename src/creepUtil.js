@@ -6,6 +6,7 @@ var repairer = require("./repairer");
 const defenderBasic = require("./defenderBasic");
 const hauler = require("./hauler");
 
+
 module.exports = {
     /**
      * Check tile delta, and return the time we've been standing still, store the last tile and stop time in creep memory

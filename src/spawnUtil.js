@@ -86,7 +86,7 @@ module.exports = {
                 this.registerCreate(spawn, 'repairer');
             }
             //If we have a container queue a maintainer
-            if(numofContainersInRoom > 1 && numOfMaintainersInRoom + numOfMaintainersQueued < 2) 
+            if(numOfMaintainersInRoom + numOfMaintainersQueued < 2) 
             {
                 console.log("SpawnBehavior" + Game.time + ": " + spawn.name + " has more than 1 container, requesting maintainer");
                 this.registerCreate(spawn, 'maintainer');

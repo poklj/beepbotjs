@@ -11,7 +11,7 @@ const memoryUtil = require('./memoryUtil');
 // Any modules that you use that modify the game's prototypes should be require'd
 // before you require the profiler.
 const profiler = require('screeps-profiler');
-
+const towerEngine = require('./towerEngine');
 
 
 
@@ -23,6 +23,7 @@ var debugMode = true;
 if(Game.time % 100 == 0) {
     memoryUtil.removeDeadCreepMem();
 }
+towerEngine.globalTower();
 
 
 // This line monkey patches the global prototypes.
@@ -109,7 +110,7 @@ module.exports.loop = function() {
         //take the array of roles and count the number of times each role appears on an alive creep
         var roleCounts = _.countBy(roles);
         Memory.creepTally = roleCounts;
-
+        
         //if the creep is a harvester, only run every other tick.
         creep.runFromRole(Game.creeps[creepHash]);
     }
